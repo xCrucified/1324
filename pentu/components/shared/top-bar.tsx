@@ -13,7 +13,7 @@ export const TopBar: React.FC<Props> = ({ className }) => {
           <span>
             Welcome to{" "}
             <strong className="text-wheat opacity-100">
-              Thornfield Market
+              Pentu Market
             </strong>
           </span>
           <span className="hidden sm:inline opacity-40">|</span>
