@@ -1,0 +1,21 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  priceCny    Float    // Исходная цена 1688 в юанях
+  priceEur    Float    // Итоговая цена для клиента в EUR
+  images      String[] // Ссылки на фото товара
+  originalUrl String   // Прямая ссылка на 1688/Pinduoduo
+  sku         String?  // Арт/SKU для быстрого поиска
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
