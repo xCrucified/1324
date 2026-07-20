@@ -22,3 +22,4 @@ corpse-and-co/
 │   └── ui/              # Shared Tailwind components (optional)
 ├── .env                 # Global environment variables
 └── package.json         # Project metadata and workspace config# 1324
+# 1324
