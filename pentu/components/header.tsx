@@ -24,7 +24,6 @@ const CATEGORIES = [
 export const Header: React.FC<Props> = ({ className }) => {
   const [searchActive, setSearchActive] = useState(false);
   
-  // Достаем значения из стора
   const { cart, query, setQuery } = useShopStore();
 
   return (
@@ -41,13 +40,13 @@ export const Header: React.FC<Props> = ({ className }) => {
             className="font-script text-caramel"
             style={{ fontSize: "1.5rem" }}
           >
-            Thornfield
+            Pentu24
           </span>
           <span
             className="font-body text-oak uppercase tracking-widest"
-            style={{ fontSize: "0.52rem" }}
+            style={{ fontSize: "0.7rem" }}
           >
-            Artisan Market
+            Marketplace
           </span>
         </a>
 

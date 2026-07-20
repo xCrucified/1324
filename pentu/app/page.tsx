@@ -9,7 +9,7 @@ interface Props {
   className?: string;
 }
 
-export const Page: React.FC<Props> = ({ className }) => {
+export const Page: React.FC<Props> = ({ }) => {
   return (
     <>
       <TopBar />

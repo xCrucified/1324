@@ -173,9 +173,9 @@ const PRODUCTS: Product[] = [
 ];
 
 export const Main: React.FC<Props> = ({ className }) => {
-  const [cart, setCart] = useState(0);
+  const [, setCart] = useState(0);
   const [toastVisible, setToastVisible] = useState(false);
-  const [query, setQuery] = useState("");
+  const [query] = useState("");
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
