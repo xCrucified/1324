@@ -1,23 +1,22 @@
+import { prisma } from "@/lib/prisma";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
 import Main from "@/components/main";
 import TopBar from "@/components/shared/top-bar";
 
-import React from "react";
+export default async function Page() {
+  const products = await prisma.product.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 
-interface Props {
-  className?: string;
-}
-
-export const Page: React.FC<Props> = ({ }) => {
   return (
     <>
       <TopBar />
       <Header />
-      <Main />
+      <Main products={products} />
       <Footer />
     </>
   );
-};
-
-export default Page;
+}

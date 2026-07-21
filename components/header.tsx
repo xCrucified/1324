@@ -2,7 +2,8 @@
 
 import { cn } from '@/lib/utils';
 import React, { useState } from 'react';
-import { useShopStore } from '@/store/use-shop'; // Укажи правильный путь к своему стору
+import Link from 'next/link';
+import { useShopStore } from '@/store/use-shop';
 
 interface Props {
   className?: string;
@@ -34,8 +35,8 @@ export const Header: React.FC<Props> = ({ className }) => {
       }}
     >
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
-        {/* Logo */}
-        <a href="#" className="shrink-0 flex flex-col leading-none mr-2">
+        {/* Logo перенаправляет на главную */}
+        <Link href="/" className="shrink-0 flex flex-col leading-none mr-2">
           <span
             className="font-script text-caramel"
             style={{ fontSize: "1.5rem" }}
@@ -48,7 +49,7 @@ export const Header: React.FC<Props> = ({ className }) => {
           >
             Marketplace
           </span>
-        </a>
+        </Link>
 
         {/* Category selector + search */}
         <div
@@ -140,7 +141,7 @@ export const Header: React.FC<Props> = ({ className }) => {
         </div>
       </div>
 
-      {/* Category nav strip */}
+      {/* Category nav strip (Ссылки на каталог и главную) */}
       <div
         className="border-t border-parchment bg-ivory overflow-x-auto"
         style={{ scrollbarWidth: "none" }}
@@ -152,19 +153,27 @@ export const Header: React.FC<Props> = ({ className }) => {
             "Flash Sale",
             "New Arrivals",
             "Sellers",
-          ].map((item) => (
-            <button
-              key={item}
-              className={`font-body whitespace-nowrap px-4 py-2 text-xs transition-colors border-b-2 ${
-                item === "Flash Sale"
-                  ? "border-amber text-amber font-bold"
-                  : "border-transparent text-bark hover:text-oak hover:border-oak"
-              }`}
-              style={{ letterSpacing: "0.03em" }}
-            >
-              {item === "Flash Sale" ? "⚡ " + item : item}
-            </button>
-          ))}
+          ].map((item) => {
+            // Формируем путь: Home ведет на главную, остальное — в каталог с фильтром
+            const href = item === "Home" 
+              ? "/" 
+              : `/catalog?category=${encodeURIComponent(item)}`;
+
+            return (
+              <Link
+                key={item}
+                href={href}
+                className={`font-body whitespace-nowrap px-4 py-2 text-xs transition-colors border-b-2 inline-block ${
+                  item === "Flash Sale"
+                    ? "border-amber text-amber font-bold"
+                    : "border-transparent text-bark hover:text-oak hover:border-oak"
+                }`}
+                style={{ letterSpacing: "0.03em" }}
+              >
+                {item === "Flash Sale" ? "⚡ " + item : item}
+              </Link>
+            );
+          })}
         </div>
       </div>
     </header>

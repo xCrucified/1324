@@ -24,7 +24,7 @@ type Product = {
 };
 
 export const ProductCard: React.FC<Props> = ({ className, onAdd, product }) => {
-      const [wishlist, setWishlist] = useState(false);
+  const [wishlist, setWishlist] = useState(false);
 
   return (
     <article
@@ -100,14 +100,14 @@ export const ProductCard: React.FC<Props> = ({ className, onAdd, product }) => {
             className="font-display text-amber font-bold"
             style={{ fontSize: "1.05rem" }}
           >
-            £{product.price.toFixed(2)}
+            €{product.price.toFixed(2)}
           </span>
           {product.originalPrice && (
             <span
               className="font-body text-oak line-through"
               style={{ fontSize: "0.72rem" }}
             >
-              £{product.originalPrice.toFixed(2)}
+              €{product.originalPrice.toFixed(2)}
             </span>
           )}
         </div>
@@ -122,7 +122,7 @@ export const ProductCard: React.FC<Props> = ({ className, onAdd, product }) => {
             className="font-body text-oak ml-auto"
             style={{ fontSize: "0.65rem" }}
           >
-            {product.sold.toLocaleString()} sold
+            {product.sold.toLocaleString('en-US')} sold
           </span>
         </div>
 
@@ -146,3 +146,5 @@ export const ProductCard: React.FC<Props> = ({ className, onAdd, product }) => {
     </article>
   );
 };
+
+export default ProductCard;
