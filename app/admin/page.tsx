@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { parseAndSaveProduct, deleteProduct } from './actions'
 import Link from 'next/link'
 
-export const dynamic = 'force-dynamic' // Принудительный SSR без статического кеша, чтобы всегда свежие данные
+export const dynamic = 'force-dynamic' // Принудительный SSR без статического кеша, чтобы всегда отображались свежие данные
 
 export default async function AdminPage() {
   const products = await prisma.product.findMany({
@@ -22,24 +22,31 @@ export default async function AdminPage() {
             await parseAndSaveProduct(url)
           }
         }} 
-        className="bg-white p-6 rounded-lg shadow-md border mb-8 flex gap-4 items-end"
+        className="bg-white p-6 rounded-lg shadow-md border mb-8"
       >
-        <div className="flex-1">
-          <label className="block text-sm font-medium mb-1">Ссылка на товар (1688 / Интернет-магазин)</label>
-          <input 
-            type="url" 
-            name="url" 
-            required 
-            placeholder="https://detail.1688.com/offer/..." 
-            className="w-full border rounded p-2 text-sm"
-          />
+        <div className="flex gap-4 items-end">
+          <div className="flex-1">
+            <label className="block text-sm font-medium mb-1">
+              Ссылка или текст с ссылкой (1688 / Pinduoduo / Yangkeduo)
+            </label>
+            <input 
+              type="text" 
+              name="url" 
+              required 
+              placeholder="https://detail.1688.com/offer/... или https://mobile.yangkeduo.com/goods.html?goods_id=..." 
+              className="w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/5"
+            />
+          </div>
+          <button 
+            type="submit" 
+            className="bg-black text-white px-5 py-2 rounded text-sm font-medium hover:bg-gray-800 transition h-[38px] shrink-0"
+          >
+            Запустить парсер
+          </button>
         </div>
-        <button 
-          type="submit" 
-          className="bg-black text-white px-5 py-2 rounded text-sm font-medium hover:bg-gray-800 transition h-[38px]"
-        >
-          Запустить парсер
-        </button>
+        <p className="text-xs text-gray-500 mt-2">
+          * Можно вставлять как прямые URL, так и скопированный текст делиться из мобильного приложения Pinduoduo.
+        </p>
       </form>
 
       {/* Список товаров */}
@@ -59,7 +66,7 @@ export default async function AdminPage() {
               const displayImage = product.image || (product.images && product.images[0])
               const imagesCount = product.images?.length || (product.image ? 1 : 0)
 
-              // Жестко фиксируем вывод цены через точку, чтобы сервер и клиент всегда видели одинаковый текст
+              // Вывод цены с 2 знаками после запятой
               const formattedPrice = Number(product.price || 0).toFixed(2)
 
               return (
