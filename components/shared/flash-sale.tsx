@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useEffect, useState } from 'react';
 
 interface Props {
   className?: string;
-  onAdd(): void;
+  onAdd: (product: any) => void; // <-- Разрешаем передавать сформированный товар
   products: {
     id: string;
     title: string;
@@ -119,7 +120,18 @@ export const FlashSale: React.FC<Props> = ({
               </div>
 
               <button
-                onClick={onAdd}
+                // Формируем объект товара, который ожидает функция handleAdd в main.tsx
+                onClick={() => onAdd({
+                  id: product.id,
+                  name: product.title,
+                  price: product.price,
+                  originalPrice: product.price * 1.2,
+                  img: product.image || '/placeholder.png',
+                  shop: 'Pentu',
+                  sold: 0,
+                  rating: 5,
+                  reviews: 0
+                })}
                 className="w-full font-body text-xs py-1.5 bg-parchment hover:bg-caramel hover:text-cream text-oak border border-oak transition-colors rounded-sm"
               >
                 Add to Cart

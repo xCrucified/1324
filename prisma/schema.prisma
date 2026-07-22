@@ -8,12 +8,58 @@ datasource db {
 }
 
 model Product {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   title       String
   price       Float
-  description String?  @db.Text
+  description String?        @db.Text
   image       String?
   images      String[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now()) @updatedAt
+  categoryId  String?
+  category    Category?      @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+  favorites   Favorite[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @default(now()) @updatedAt
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  products Product[]
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  total       Float
+  status      String      @default("Processing") // Processing, Shipped, Delivered, Cancelled
+  itemsCount  Int
+  firstName   String
+  lastName    String
+  email       String
+  address     String
+  city        String
+  country     String
+  payment     String      @default("card")
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([productId])
 }

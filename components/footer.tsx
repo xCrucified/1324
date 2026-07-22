@@ -1,13 +1,19 @@
 import { cn } from '@/lib/utils';
 import React from 'react';
+import Link from 'next/link';
 
 interface Props {
   className?: string;
 }
 
+// Функция для перевода текста ссылки в безопасный URL (slug)
+const slugify = (text: string) => {
+  return text.toLowerCase().replace(/ & /g, '-').replace(/\s+/g, '-');
+};
+
 const cols = [
     {
-      title: "Thornfield Market",
+      title: "Pentu24 Market",
       links: [
         "About Us",
         "Careers",
@@ -62,17 +68,20 @@ export const Footer: React.FC<Props> = ({ className }) => {
               {col.title}
             </h3>
             <ul className="space-y-2 list-none p-0 m-0">
-              {col.links.map((l) => (
-                <li key={l}>
-                  <a
-                    href="#"
-                    className="font-body text-parchment opacity-70 hover:opacity-100 hover:text-wheat transition-colors"
-                    style={{ fontSize: "0.82rem" }}
-                  >
-                    {l}
-                  </a>
-                </li>
-              ))}
+              {col.links.map((l) => {
+                const href = `/info/${slugify(l)}`;
+                return (
+                  <li key={l}>
+                    <Link
+                      href={href}
+                      className="font-body text-parchment opacity-70 hover:opacity-100 hover:text-wheat transition-colors"
+                      style={{ fontSize: "0.82rem" }}
+                    >
+                      {l}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         ))}
@@ -89,26 +98,29 @@ export const Footer: React.FC<Props> = ({ className }) => {
               className="font-script text-caramel"
               style={{ fontSize: "1.2rem" }}
             >
-              Thornfield
+              Pentu24.com
             </span>
             <span
               className="font-body text-oak opacity-60"
               style={{ fontSize: "0.7rem" }}
             >
-              © 2026 Thornfield Market Ltd. All rights reserved.
+              © 2026 Pentu24 Market Ltd. All rights reserved.
             </span>
           </div>
           <div className="flex gap-4">
-            {["Privacy", "Terms", "Cookies", "Sitemap"].map((l) => (
-              <a
-                key={l}
-                href="#"
-                className="font-body text-oak hover:text-wheat transition-colors opacity-60 hover:opacity-100"
-                style={{ fontSize: "0.7rem" }}
-              >
-                {l}
-              </a>
-            ))}
+            {["Privacy", "Terms", "Cookies", "Sitemap"].map((l) => {
+              const href = `/info/${slugify(l)}`;
+              return (
+                <Link
+                  key={l}
+                  href={href}
+                  className="font-body text-oak hover:text-wheat transition-colors opacity-60 hover:opacity-100"
+                  style={{ fontSize: "0.7rem" }}
+                >
+                  {l}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>

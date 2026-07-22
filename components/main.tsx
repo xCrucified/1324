@@ -9,9 +9,12 @@ import CategoryGrid from "./shared/category-grid";
 import FlashSale from "./shared/flash-sale";
 import Banner from "./ui/banner";
 import { cn } from "@/lib/utils";
+import { useShopStore } from "@/store/use-shop";
+import ActionToast from "./ui/action-toast";
 
 interface Props {
   className?: string;
+  selectedCategory?: string; // Добавили категорию в пропсы
   products: {
     id: string;
     title: string;
@@ -23,7 +26,7 @@ interface Props {
 }
 
 type Product = {
-  id: number;
+  id: string;
   name: string;
   price: number;
   originalPrice?: number;
@@ -36,10 +39,12 @@ type Product = {
   freeShip?: boolean;
 };
 
-export const Main: React.FC<Props> = ({ className, products }) => {
-  const [, setCart] = useState(0);
+export const Main: React.FC<Props> = ({ className, products, selectedCategory = 'Home' }) => {
   const [toastVisible, setToastVisible] = useState(false);
-  const [query] = useState("");
+  const [savedToast, setSavedToast] = useState(false);
+  const [savedMessage, setSavedMessage] = useState('');
+  
+  const { query, addToCart, savedItems, toggleSave } = useShopStore();
 
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -51,24 +56,49 @@ export const Main: React.FC<Props> = ({ className, products }) => {
     };
   }, []);
 
-  const handleAdd = useCallback(() => {
-    setCart((c) => c + 1);
-    setToastVisible(true);
+  const handleAdd = useCallback(
+    (product: Product) => {
+      addToCart({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        originalPrice: product.originalPrice ?? product.price * 1.2,
+        img: product.img,
+        shop: product.shop,
+        sold: product.sold,
+        rating: product.rating,
+        reviews: product.reviews,
+      });
 
-    if (toastTimer.current) {
-      clearTimeout(toastTimer.current);
-    }
+      setToastVisible(true);
 
-    toastTimer.current = setTimeout(() => {
-      setToastVisible(false);
-    }, 2200);
-  }, []);
+      if (toastTimer.current) {
+        clearTimeout(toastTimer.current);
+      }
 
-  // Преобразуем товары из Prisma в формат ProductCard
+      toastTimer.current = setTimeout(() => {
+        setToastVisible(false);
+      }, 2200);
+    },
+    [addToCart]
+  );
+
+  const handleToggleSave = useCallback(
+    (product: { id: string; name: string; price: number; img: string; shop: string }) => {
+      const isCurrentlySaved = savedItems.some((item) => item.id === product.id);
+      toggleSave(product);
+      
+      setSavedMessage(isCurrentlySaved ? 'Removed from saved items' : 'Added to saved items');
+      setSavedToast(true);
+      setTimeout(() => setSavedToast(false), 2000);
+    },
+    [savedItems, toggleSave]
+  );
+
   const catalog: Product[] = useMemo(
     () =>
-      products.map((p, index) => ({
-        id: index + 1,
+      products.map((p) => ({
+        id: p.id,
         name: p.title,
         price: p.price,
         originalPrice: undefined,
@@ -106,12 +136,8 @@ export const Main: React.FC<Props> = ({ className, products }) => {
     return (
       <div className={cn(className, "bg-cream min-h-screen")}>
         <main className="max-w-7xl mx-auto py-20 text-center">
-          <h2 className="text-3xl font-bold text-bark">
-            No products yet
-          </h2>
-          <p className="text-oak mt-3">
-            Add products from the admin panel.
-          </p>
+          <h2 className="text-3xl font-bold text-bark">No products yet</h2>
+          <p className="text-oak mt-3">Add products from the admin panel.</p>
         </main>
       </div>
     );
@@ -120,41 +146,64 @@ export const Main: React.FC<Props> = ({ className, products }) => {
   return (
     <div className={cn(className, "bg-cream min-h-screen")}>
       <main>
-        {!query.trim() && (
+        {/* Баннеры и FlashSale показываются ТОЛЬКО на главной (Home) и при отсутствии поиска */}
+        {selectedCategory === 'Home' && !query.trim() && (
           <>
             <Banner />
-           <FlashSale
-    products={products}
-    onAdd={handleAdd}
-/>
+            <FlashSale products={products} onAdd={handleAdd} />
             <CategoryGrid />
             <TrustBar />
           </>
         )}
 
-        {query.trim() ? (
-          <section className="max-w-7xl mx-auto px-3 py-4">
-            <div className="bg-ivory border border-parchment rounded-sm p-4 mb-3">
-              <p className="font-body text-bark text-sm">
-                {filtered.length} results for <strong>{query}</strong>
-              </p>
+        {/* Если выбран поисковый запрос ИЛИ открыта любая другая категория */}
+        {query.trim() || selectedCategory !== 'Home' ? (
+          <section className="max-w-7xl mx-auto px-3 py-6">
+            <div className="bg-ivory border border-parchment rounded-sm p-4 mb-4 flex items-center justify-between">
+              <h1 className="font-display font-bold text-xl text-bark">
+                {query.trim() ? `Search results for "${query}"` : selectedCategory}
+              </h1>
+              <span className="font-body text-oak text-xs">
+                {filtered.length} {filtered.length === 1 ? 'item' : 'items'} found
+              </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {filtered.map((p) => (
-                <ProductCard
-                  key={p.id}
-                  product={p}
-                  onAdd={handleAdd}
-                />
-              ))}
-            </div>
+            {filtered.length === 0 ? (
+              <div className="text-center py-20 bg-ivory border border-parchment rounded-sm">
+                <p className="font-display font-bold text-bark text-lg">No products found</p>
+                <p className="font-body text-oak text-xs mt-1">Try selecting a different category or search term.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {filtered.map((p) => {
+                  const isSaved = savedItems.some((item) => item.id === p.id);
+                  return (
+                    <ProductCard
+                      key={p.id}
+                      product={p}
+                      onAdd={() => handleAdd(p)}
+                      isSaved={isSaved}
+                      onToggleSave={() =>
+                        handleToggleSave({
+                          id: p.id,
+                          name: p.name,
+                          price: p.price,
+                          img: p.img,
+                          shop: p.shop,
+                        })
+                      }
+                    />
+                  );
+                })}
+              </div>
+            )}
           </section>
         ) : (
+          /* Стандартные секции для главной страницы (Home) */
           <>
             <ProductSection
               title="🔥 Hot Items"
-              products={hotItems.length ? hotItems : catalog.slice(0, 6)}
+              products={hotItems.length ? hotItems.slice(0, 6) : catalog.slice(0, 6)}
               onAdd={handleAdd}
             />
 
@@ -174,6 +223,7 @@ export const Main: React.FC<Props> = ({ className, products }) => {
       </main>
 
       <CartToast visible={toastVisible} />
+      <ActionToast visible={savedToast} message={savedMessage} icon="🤍" />
     </div>
   );
 };

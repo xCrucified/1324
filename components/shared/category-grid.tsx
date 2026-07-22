@@ -1,8 +1,4 @@
-import React from 'react';
-
-interface Props {
-  className?: string;
-}
+import Link from 'next/link';
 
 const CATEGORIES = [
   { label: "Ceramics", icon: "🏺", count: "2.4k items" },
@@ -17,41 +13,25 @@ const CATEGORIES = [
   { label: "Gifts", icon: "🎁", count: "3.1k items" },
 ];
 
-export const CategoryGrid: React.FC<Props> = ({ className }) => {
+export default function CategoryGrid() {
   return (
-    <section className="max-w-7xl mx-auto px-3 mb-4">
-      <div className="bg-ivory border border-parchment rounded-sm p-4">
-        <h2
-          className="font-display text-bark font-semibold mb-3"
-          style={{ fontSize: "1rem" }}
-        >
-          Browse Categories
-        </h2>
-        <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.label}
-              className="flex flex-col items-center gap-1.5 p-2 rounded-sm hover:bg-parchment transition-colors group"
-            >
-              <span style={{ fontSize: "1.6rem" }}>{cat.icon}</span>
-              <span
-                className="font-body text-bark text-xs text-center leading-tight group-hover:text-caramel transition-colors"
-                style={{ fontSize: "0.68rem" }}
-              >
-                {cat.label}
-              </span>
-              <span
-                className="font-body text-oak"
-                style={{ fontSize: "0.58rem" }}
-              >
-                {cat.count}
-              </span>
-            </button>
-          ))}
-        </div>
+    <div className="max-w-7xl mx-auto px-4 py-6">
+      <h2 className="font-display font-bold text-lg text-bark mb-4">Browse Categories</h2>
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        {CATEGORIES.map((cat) => (
+          <Link
+            key={cat.label}
+            href={`/?category=${encodeURIComponent(cat.label)}`}
+            className="bg-ivory border border-parchment hover:border-oak transition-colors p-4 rounded-sm flex flex-col items-center text-center group"
+          >
+            <span className="text-2xl mb-2">{cat.icon}</span>
+            <span className="font-display font-bold text-xs text-bark group-hover:text-caramel transition-colors">
+              {cat.label}
+            </span>
+            <span className="font-body text-[10px] text-oak mt-0.5">{cat.count}</span>
+          </Link>
+        ))}
       </div>
-    </section>
+    </div>
   );
-};
-
-export default CategoryGrid;
+}
