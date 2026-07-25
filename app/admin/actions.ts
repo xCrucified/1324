@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use server'
 
 import { prisma } from '@/lib/prisma'
@@ -95,24 +96,19 @@ export async function parseAndSaveProduct(rawInputUrl: string) {
   try {
     console.log('--- START PARSING INPUT ---', rawInputUrl)
 
-    // 1. Извлекаем чистый URL
     const extractedUrlMatch = rawInputUrl.match(/(https?:\/\/[^\s]+)/)
     let cleanUrl = extractedUrlMatch ? extractedUrlMatch[1] : rawInputUrl.trim()
 
     try {
       cleanUrl = decodeURIComponent(cleanUrl)
     } catch {
-      // Игнорируем ошибки декодирования
     }
 
-    // 2. Определяем провайдера
     const isPinduoduo = /pinduoduo|yangkeduo|goods_id|goodsId/i.test(cleanUrl) || !cleanUrl.includes('1688.com')
     const provider = isPinduoduo ? 'pinduoduo' : '1688'
 
-    // 3. Извлекаем ID
     let itemId = extractItemId(cleanUrl, provider)
 
-    // 4. Если короткая ссылка — раскрываем редирект
     if (!itemId && (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://'))) {
       console.log('⚠️ ID не найден. Пробуем получить финальный URL через редирект...')
       try {
