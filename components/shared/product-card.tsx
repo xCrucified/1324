@@ -1,6 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
-import React from 'react';
-import Link from 'next/link'; // <-- Импортируем Link
+'use client'
+
+import React, { useState } from 'react';
+import Link from 'next/link';
 import BadgePill from '../ui/badge-pill';
 import Stars from '@/lib/stars';
 
@@ -21,12 +23,33 @@ type Product = {
   rating: number;
   reviews: number;
   shop: string;
-  img: string;
+  img?: string;
+  images?: string[];
   badge?: string;
   freeShip?: boolean;
 };
 
 export const ProductCard: React.FC<Props> = ({ className, onAdd, onToggleSave, isSaved, product }) => {
+  const imagesList = product.images && product.images.length > 0 
+    ? product.images 
+    : product.img 
+      ? [product.img] 
+      : ['/placeholder.png'];
+
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const handleNextImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev + 1) % imagesList.length);
+  };
+
+  const handlePrevImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev - 1 + imagesList.length) % imagesList.length);
+  };
+
   return (
     <Link
       href={`/product/${product.id}`}
@@ -34,18 +57,51 @@ export const ProductCard: React.FC<Props> = ({ className, onAdd, onToggleSave, i
       style={{ boxShadow: "0 1px 4px rgba(30,15,6,0.05)" }}
     >
       <article className="flex flex-col flex-1">
-        {/* Image */}
+        {/* Image Container */}
         <div
           className="relative overflow-hidden bg-parchment"
           style={{ aspectRatio: "1/1" }}
         >
           <img
-            src={product.img}
+            src={imagesList[currentImageIndex]}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
-          {/* badges */}
-          <div className="absolute top-2 left-2 flex flex-col gap-1">
+
+          {imagesList.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={handlePrevImage}
+                className="absolute left-1 top-1/2 -translate-y-1/2 bg-ivory/80 hover:bg-ivory text-bark rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs shadow-sm z-10"
+                title="Предыдущее фото"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                onClick={handleNextImage}
+                className="absolute right-1 top-1/2 -translate-y-1/2 bg-ivory/80 hover:bg-ivory text-bark rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs shadow-sm z-10"
+                title="Следующее фото"
+              >
+                ›
+              </button>
+
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10 pointer-events-none">
+                {imagesList.map((_, idx) => (
+                  <span
+                    key={idx}
+                    className={`h-1 rounded-full transition-all ${
+                      idx === currentImageIndex ? 'w-3 bg-bark' : 'w-1 bg-bark/40'
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Badges */}
+          <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
             {product.badge && <BadgePill text={product.badge} />}
             {product.freeShip && (
               <span
@@ -59,6 +115,7 @@ export const ProductCard: React.FC<Props> = ({ className, onAdd, onToggleSave, i
           
           {/* Wishlist (Сердечко) */}
           <button
+            type="button"
             className="absolute top-2 right-2 bg-ivory/80 hover:bg-ivory transition-opacity rounded-full p-1.5 shadow-sm z-10"
             onClick={(e) => {
               e.preventDefault();
@@ -83,7 +140,7 @@ export const ProductCard: React.FC<Props> = ({ className, onAdd, onToggleSave, i
           {/* Discount badge */}
           {product.originalPrice && (
             <div
-              className="absolute bottom-2 right-2 bg-amber text-cream font-body rounded-sm px-1.5 py-px"
+              className="absolute bottom-2 right-2 bg-amber text-cream font-body rounded-sm px-1.5 py-px z-10"
               style={{ fontSize: "0.62rem", fontWeight: 700 }}
             >
               -{Math.round((1 - product.price / product.originalPrice) * 100)}%
@@ -142,6 +199,7 @@ export const ProductCard: React.FC<Props> = ({ className, onAdd, onToggleSave, i
 
           {/* Add to cart */}
           <button
+            type="button"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();

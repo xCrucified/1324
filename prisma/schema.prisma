@@ -8,18 +8,18 @@ datasource db {
 }
 
 model Product {
-  id          String         @id @default(cuid())
+  id          String      @id @default(cuid())
   title       String
   price       Float
-  description String?        @db.Text
+  description String?     @db.Text
   image       String?
   images      String[]
   categoryId  String?
-  category    Category?      @relation(fields: [categoryId], references: [id])
+  category    Category?   @relation(fields: [categoryId], references: [id])
   orderItems  OrderItem[]
   favorites   Favorite[]
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @default(now()) @updatedAt
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @default(now()) @updatedAt
 }
 
 model Category {
@@ -50,7 +50,7 @@ model OrderItem {
   orderId   String
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId String
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   quantity  Int
   price     Float
 }

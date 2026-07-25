@@ -1,8 +1,87 @@
 import { prisma } from '@/lib/prisma'
-import { parseAndSaveProduct, deleteProduct } from './actions'
+import { deleteProduct } from './actions'
 import Link from 'next/link'
+import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
+import ProductForm from './ProductForm'
 
-export const dynamic = 'force-dynamic' // Принудительный SSR без статического кеша, чтобы всегда отображались свежие данные
+export const dynamic = 'force-dynamic'
+
+async function fileToDataUrl(file: File): Promise<string> {
+  if (!file || file.size === 0) return ''
+  const bytes = await file.arrayBuffer()
+  const buffer = Buffer.from(bytes)
+  const base64 = buffer.toString('base64')
+  const mime = file.type || 'image/jpeg'
+  return `data:${mime};base64,${base64}`
+}
+
+async function handleCreateProduct(formData: FormData) {
+  'use server'
+
+  const title = (formData.get('title') as string) || 'New Product'
+  const price = parseFloat(formData.get('price') as string) || 0
+  const description = (formData.get('description') as string) || ''
+  const sourceUrl = (formData.get('sourceUrl') as string) || ''
+
+  const images: string[] = []
+
+  const rawImagesText = (formData.get('imagesText') as string) || ''
+  const textUrls = rawImagesText
+    .split('\n')
+    .map((url) => url.trim())
+    .filter((url) => url.length > 0)
+  images.push(...textUrls)
+
+  const files = formData.getAll('imageFiles') as File[]
+  for (const file of files) {
+    if (file && file.size > 0) {
+      const dataUrl = await fileToDataUrl(file)
+      if (dataUrl) {
+        images.push(dataUrl)
+      }
+    }
+  }
+
+  const mainImage = images[0] || 'https://via.placeholder.com/800x800?text=No+Image'
+
+  const rawColors = (formData.get('colors') as string) || ''
+  const colors = rawColors
+    .split(/[\n,]/)
+    .map((c) => c.trim())
+    .filter((c) => c.length > 0)
+
+  const rawSizes = (formData.get('sizes') as string) || ''
+  const sizes = rawSizes
+    .split(/[\n,]/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+
+  let fullDescription = description
+  if (sourceUrl) {
+    fullDescription += `\n\nSource: ${sourceUrl}`
+  }
+  if (colors.length > 0) {
+    fullDescription += `\nColors: ${colors.join(', ')}`
+  }
+  if (sizes.length > 0) {
+    fullDescription += `\nSizes: ${sizes.join(', ')}`
+  }
+
+  await prisma.product.create({
+    data: {
+      title,
+      price: isNaN(price) ? 0 : price,
+      description: fullDescription.trim(),
+      image: mainImage,
+      images: images.length > 0 ? images : [mainImage],
+    },
+  })
+
+  revalidatePath('/admin')
+  revalidatePath('/')
+  redirect('/admin')
+}
 
 export default async function AdminPage() {
   const products = await prisma.product.findMany({
@@ -13,41 +92,8 @@ export default async function AdminPage() {
     <div className="p-8 max-w-6xl mx-auto" suppressHydrationWarning>
       <h1 className="text-2xl font-bold mb-6">Панель управления магазином</h1>
 
-      {/* Форма парсера */}
-      <form 
-        action={async (formData) => {
-          'use server'
-          const url = formData.get('url') as string
-          if (url) {
-            await parseAndSaveProduct(url)
-          }
-        }} 
-        className="bg-white p-6 rounded-lg shadow-md border mb-8"
-      >
-        <div className="flex gap-4 items-end">
-          <div className="flex-1">
-            <label className="block text-sm font-medium mb-1">
-              Ссылка или текст с ссылкой (1688 / Pinduoduo / Yangkeduo)
-            </label>
-            <input 
-              type="text" 
-              name="url" 
-              required 
-              placeholder="https://detail.1688.com/offer/... или https://mobile.yangkeduo.com/goods.html?goods_id=..." 
-              className="w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/5"
-            />
-          </div>
-          <button 
-            type="submit" 
-            className="bg-black text-white px-5 py-2 rounded text-sm font-medium hover:bg-gray-800 transition h-[38px] shrink-0"
-          >
-            Запустить парсер
-          </button>
-        </div>
-        <p className="text-xs text-gray-500 mt-2">
-          * Можно вставлять как прямые URL, так и скопированный текст делиться из мобильного приложения Pinduoduo.
-        </p>
-      </form>
+      {/* Интерактивная форма с превью */}
+      <ProductForm action={handleCreateProduct} />
 
       {/* Список товаров */}
       <h2 className="text-xl font-semibold mb-4">Список товаров ({products.length})</h2>
@@ -65,8 +111,6 @@ export default async function AdminPage() {
             {products.map((product) => {
               const displayImage = product.image || (product.images && product.images[0])
               const imagesCount = product.images?.length || (product.image ? 1 : 0)
-
-              // Вывод цены с 2 знаками после запятой
               const formattedPrice = Number(product.price || 0).toFixed(2)
 
               return (
@@ -120,7 +164,7 @@ export default async function AdminPage() {
             {products.length === 0 && (
               <tr>
                 <td colSpan={4} className="p-6 text-center text-gray-500">
-                  Список товаров пуст. Добавьте первую ссылку сверху.
+                  Список товаров пуст. Добавьте первый товар через форму выше.
                 </td>
               </tr>
             )}

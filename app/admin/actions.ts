@@ -4,15 +4,41 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-// Функция перевода на английский
+function isValidPublicUrl(urlStr: string): boolean {
+  try {
+    const parsed = new URL(urlStr)
+    if (!['http:', 'https:'].includes(parsed.protocol)) return false
+    const hostname = parsed.hostname.toLowerCase()
+    if (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('10.') ||
+      hostname.endsWith('.local')
+    ) {
+      return false
+    }
+    return true
+  } catch {
+    return false
+  }
+}
+
 async function translateToEnglish(text: string): Promise<string> {
-  if (!text) return ''
+  if (!text || !text.trim()) return ''
   try {
     const cleanText = text.replace(/<[^>]*>?/gm, ' ').trim()
     if (!cleanText) return ''
 
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(cleanText)}`
-    const res = await fetch(url)
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t`
+    const res = await fetch(url, { 
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `q=${encodeURIComponent(cleanText)}`,
+      signal: AbortSignal.timeout(8000),
+      cache: 'no-store' 
+    })
+    
     if (!res.ok) return text
     const data = await res.json()
     return data[0]?.map((item: any) => item[0]).join('') || text
@@ -22,247 +48,204 @@ async function translateToEnglish(text: string): Promise<string> {
   }
 }
 
-// Извлечение цены
+async function translateBatchToEnglish(lines: string[]): Promise<string[]> {
+  if (!lines.length) return []
+  const cleanLines = lines.map(l => l.replace(/<[^>]*>?/gm, ' ').trim()).filter(Boolean)
+  if (!cleanLines.length) return []
+
+  const delimiter = ' ||| '
+  const joinedText = cleanLines.join(delimiter)
+  
+  try {
+    const translatedJoined = await translateToEnglish(joinedText)
+    const translatedLines = translatedJoined.split(/\s*\|\|\|\s*/)
+    if (translatedLines.length === cleanLines.length) {
+      return translatedLines
+    }
+    return cleanLines
+  } catch {
+    return cleanLines
+  }
+}
+
 function parsePrice(val: any): number {
-  if (!val) return 0
+  if (val === null || val === undefined) return 0
+
   if (typeof val === 'number') {
     return val > 50000 ? val / 100 : val
   }
+
   if (typeof val === 'string') {
-    const match = val.match(/[\d.]+/)
-    if (!match) return 0
-    const parsed = parseFloat(match[0])
-    return parsed > 50000 ? parsed / 100 : parsed
+    const matches = val.match(/[\d.]+/g)
+    if (!matches || matches.length === 0) return 0
+    const numbers = matches.map(n => parseFloat(n)).filter(n => !isNaN(n))
+    if (numbers.length === 0) return 0
+    let minVal = Math.min(...numbers)
+    return minVal > 50000 ? minVal / 100 : minVal
   }
+
   if (Array.isArray(val)) {
+    let min = Infinity
     for (const item of val) {
-      const res = parsePrice(item)
-      if (res > 0) return res
+      const p = parsePrice(item)
+      if (p > 0 && p < min) {
+        min = p
+      }
     }
+    return min === Infinity ? 0 : min
   }
+
   if (typeof val === 'object') {
-    return (
-      parsePrice(val.price) ||
-      parsePrice(val.value) ||
-      parsePrice(val.min_group_price) ||
-      parsePrice(val.min_normal_price) ||
-      parsePrice(val.priceMoney) ||
-      parsePrice(val.promotionPrice) ||
-      parsePrice(val.displayPrice) ||
-      parsePrice(val.reservePrice)
-    )
+    let min = Infinity
+    const keysToCheck = ['price', 'promotionPrice', 'min_price', 'value', 'skuRangePrice', 'discountPrice', 'salePrice']
+    for (const key of keysToCheck) {
+      if (val[key] !== undefined) {
+        const p = parsePrice(val[key])
+        if (p > 0 && p < min) {
+          min = p
+        }
+      }
+    }
+    return min === Infinity ? 0 : min
   }
+
   return 0
 }
 
-// Извлечение ID
-function extractItemId(url: string, provider: 'pinduoduo' | '1688'): string | null {
-  if (/^\d+$/.test(url.trim())) {
-    return url.trim()
+function extractItemId(url: string): string | null {
+  const trimmedUrl = url.trim()
+  if (/^\d+$/.test(trimmedUrl)) {
+    return trimmedUrl
   }
 
-  if (provider === 'pinduoduo') {
-    const patterns = [
-      /goods_id[:=](\d+)/i,
-      /goodsId[:=](\d+)/i,
-      /goods[_-]?id[:=](\d+)/i,
-      /sub_goods_id[:=](\d+)/i,
-      /[?&]id=(\d+)/i,
-      /\/goods\/(\d+)/i,
-      /\/goods_detail\/(\d+)/i,
-    ]
-    for (const pattern of patterns) {
-      const match = url.match(pattern)
-      if (match && match[1]) return match[1]
-    }
-  } else {
-    const patterns = [
-      /offer\/(\d+)\.html/i,
-      /itemId=(\d+)/i,
-      /[?&]id=(\d+)/i,
-      /\/(\d+)\.html/i,
-    ]
-    for (const pattern of patterns) {
-      const match = url.match(pattern)
-      if (match && match[1]) return match[1]
-    }
+  const patterns = [
+    /offer\/(\d+)\.html/i,
+    /itemId=(\d+)/i,
+    /item_id=(\d+)/i,
+    /[?&]id=(\d+)/i,
+    /\/(\d+)\.html/i,
+  ]
+  for (const pattern of patterns) {
+    const match = trimmedUrl.match(pattern)
+    if (match && match[1]) return match[1]
   }
 
-  return null
+  const digitsMatch = trimmedUrl.match(/\d{8,}/)
+  return digitsMatch ? digitsMatch[0] : null
 }
 
 export async function parseAndSaveProduct(rawInputUrl: string) {
   try {
     console.log('--- START PARSING INPUT ---', rawInputUrl)
 
-    // 1. Извлекаем чистый URL
     const extractedUrlMatch = rawInputUrl.match(/(https?:\/\/[^\s]+)/)
     let cleanUrl = extractedUrlMatch ? extractedUrlMatch[1] : rawInputUrl.trim()
 
     try {
       cleanUrl = decodeURIComponent(cleanUrl)
-    } catch {
-      // Игнорируем ошибки декодирования
-    }
+    } catch {}
 
-    // 2. Определяем провайдера
-    const isPinduoduo = /pinduoduo|yangkeduo|goods_id|goodsId/i.test(cleanUrl) || !cleanUrl.includes('1688.com')
-    const provider = isPinduoduo ? 'pinduoduo' : '1688'
+    let itemId = extractItemId(cleanUrl)
 
-    // 3. Извлекаем ID
-    let itemId = extractItemId(cleanUrl, provider)
-
-    // 4. Если короткая ссылка — раскрываем редирект
-    if (!itemId && (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://'))) {
-      console.log('⚠️ ID не найден. Пробуем получить финальный URL через редирект...')
+    if (!itemId && isValidPublicUrl(cleanUrl)) {
+      console.log('⚠️ Item ID не найден. Пробуем получить финальный URL через редирект...')
       try {
         const res = await fetch(cleanUrl, {
           method: 'GET',
           redirect: 'follow',
           headers: {
-            'User-Agent':
-              'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
+            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15',
           },
+          signal: AbortSignal.timeout(8000),
+          cache: 'no-store'
         })
         const finalUrl = decodeURIComponent(res.url)
         console.log('📍 Финальный URL:', finalUrl)
-        itemId = extractItemId(finalUrl, provider)
+        itemId = extractItemId(finalUrl)
       } catch (err) {
         console.warn('Не удалось раскрыть ссылку:', err)
       }
     }
 
     if (!itemId) {
-      throw new Error(`Could not extract product ID from ${provider.toUpperCase()} link. Make sure the URL contains product ID.`)
+      throw new Error('Could not extract itemId from the link. Make sure the URL contains a valid item ID or offer link.')
     }
 
-    console.log(`✅ Extracted Item ID: ${itemId} | Provider: ${provider}`)
+    console.log(`✅ Extracted Item ID: ${itemId}`)
 
     const apiKey = process.env.RAPIDAPI_KEY
-    const apiHost = process.env.RAPIDAPI_HOST || 'taobao-tmall-16881.p.rapidapi.com'
+    const apiHost = process.env.RAPIDAPI_HOST || 'taobao-1688-api1.p.rapidapi.com'
 
     if (!apiKey) {
       throw new Error('API Key missing in environment variables (RAPIDAPI_KEY).')
     }
 
-    // Варианты эндпоинтов для проверки
-    const endpointCandidates = [
-      `https://${apiHost}/api/tkl/item/detail?provider=${provider}&id=${itemId}`,
-      `https://${apiHost}/item_detail?provider=${provider}&id=${itemId}`,
-      `https://${apiHost}/api/item/detail?provider=${provider}&id=${itemId}`,
-      `https://${apiHost}/item_detail?id=${itemId}`,
-      `https://${apiHost}/api/tkl/item/detail?id=${itemId}`,
-    ]
+    // Обновлен путь на /1688/detail в соответствии с документацией API
+    const targetUrl = `https://${apiHost}/1688/detail?itemId=${itemId}`
+    console.log(`🔍 Запрос к API: ${targetUrl}`)
 
-    let response: Response | null = null
-    let lastErrorText = ''
+    const response = await fetch(targetUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-rapidapi-host': apiHost,
+        'x-rapidapi-key': apiKey,
+      },
+      signal: AbortSignal.timeout(15000),
+      cache: 'no-store'
+    })
 
-    for (const url of endpointCandidates) {
-      console.log(`🔍 Пробуем эндпоинт: ${url}`)
-      try {
-        const res = await fetch(url, {
-          headers: {
-            'X-RapidAPI-Key': apiKey,
-            'X-RapidAPI-Host': apiHost,
-          },
-          signal: AbortSignal.timeout(15000),
-        })
-
-        if (res.status === 404) {
-          console.warn(`⚠️ Эндпоинт ${url} вернул 404, пробуем следующий...`)
-          continue
-        }
-
-        response = res
-        if (!res.ok) {
-          lastErrorText = await res.text()
-          console.error(`❌ Ошибка API (Status ${res.status}): ${lastErrorText}`)
-        } else {
-          break
-        }
-      } catch (e: any) {
-        console.warn(`Ошибка при запросе к ${url}:`, e.message)
-      }
-    }
-
-    if (!response || !response.ok) {
-      throw new Error(`RapidAPI Error: ${lastErrorText || response?.statusText || 'Endpoint unavailable (404)'}`)
+    if (!response.ok) {
+      const errText = await response.text()
+      throw new Error(`RapidAPI Error (Status ${response.status}): ${errText}`)
     }
 
     const json = await response.json()
     console.log('--- API RESPONSE ---', JSON.stringify(json).substring(0, 300))
 
-    const item =
-      json.item ||
-      json.data?.item ||
-      json.goods_details?.[0] ||
-      json.result?.item ||
-      json.data ||
-      json.result ||
-      json
+    const item = json.item || json.data?.item || json.result?.item || json.data || json.result || json
 
-    if (!item || Object.keys(item).length === 0 || json.msg?.includes('error')) {
+    if (!item || Object.keys(item).length === 0) {
       throw new Error('Empty or invalid product response from API.')
     }
 
     let title = 'Imported Product'
-    let mainImage: string | null = null
-    let allImages: string[] = []
     let rawProps: string[] = []
-    let rawPrice = 0
 
-    // Название
-    const rawTitle = item.title || item.goods_name || item.goodsName || item.itemTitle || item.shortTitle || item.desc
+    const rawTitle = item.title || item.goods_name || item.goodsName || item.itemTitle || item.subject || item.desc
     if (rawTitle) {
       title = await translateToEnglish(rawTitle)
     }
 
-    // Изображения
-    const rawMain =
-      item.pic_url ||
-      item.hd_thumb_url ||
-      item.thumb_url ||
-      item.image ||
-      item.mainImage ||
-      item.pictUrl ||
-      item.picUrl ||
-      (item.images && item.images[0])
-
-    if (rawMain) {
-      mainImage = rawMain.startsWith('//') ? `https:${rawMain}` : rawMain
-    }
-
     const imagesSet = new Set<string>()
-    if (mainImage) imagesSet.add(mainImage)
-
-    const gallery =
-      item.images ||
-      item.detail_gallery ||
-      item.top_gallery ||
-      item.item_imgs ||
-      item.imageList ||
-      item.smallImages ||
-      []
-
-    gallery.forEach((img: any) => {
-      const src = typeof img === 'string' ? img : img?.url || img?.src || img?.url_hd
-      if (src) imagesSet.add(src.startsWith('//') ? `https:${src}` : src)
-    })
-
-    allImages = Array.from(imagesSet)
-    if (!mainImage && allImages.length > 0) {
-      mainImage = allImages[0]
+    const extractUrls = (obj: any) => {
+      if (!obj) return
+      if (typeof obj === 'string') {
+        if (obj.startsWith('http://') || obj.startsWith('https://') || obj.startsWith('//')) {
+          imagesSet.add(obj.startsWith('//') ? `https:${obj}` : obj)
+        }
+      } else if (Array.isArray(obj)) {
+        obj.forEach(extractUrls)
+      } else if (typeof obj === 'object') {
+        const priorityKeys = ['url', 'src', 'pic_url', 'image', 'img', 'mainImage', 'pictUrl', 'picUrl', 'imageList', 'images']
+        for (const key of priorityKeys) {
+          if (obj[key]) extractUrls(obj[key])
+        }
+      }
     }
 
-    // Характеристики
-    const propsSource =
-      item.props_list ||
-      item.attributes ||
-      item.goods_properties ||
-      item.props ||
-      item.properties ||
-      []
+    extractUrls(item.pic_url)
+    extractUrls(item.image)
+    extractUrls(item.images)
+    extractUrls(item.skuImages)
+    extractUrls(item.imageList)
+    extractUrls(item.item_imgs)
 
+    let allImages = Array.from(imagesSet)
+    let mainImage = allImages[0] || 'https://via.placeholder.com/800x800?text=No+Image'
+    if (allImages.length === 0) allImages = [mainImage]
+
+    const propsSource = item.props_list || item.attributes || item.goods_properties || item.props || []
     if (typeof propsSource === 'object' && !Array.isArray(propsSource)) {
       rawProps = Object.values(propsSource).map((p: any) => String(p))
     } else if (Array.isArray(propsSource)) {
@@ -271,37 +254,29 @@ export async function parseAndSaveProduct(rawInputUrl: string) {
         .filter(Boolean)
     }
 
-    // Цена
-    rawPrice = parsePrice(
-      item.price ||
-      item.min_group_price ||
-      item.min_normal_price ||
-      item.priceRange ||
-      item.reservePrice ||
-      item.promotionPrice ||
-      item.reference_price ||
-      item.priceInfo ||
-      item.sku?.def?.price ||
-      item.skus?.[0]?.price ||
-      item.skus?.[0]?.group_price
-    )
+    const rawPrice = parsePrice([
+      item.priceInfo,
+      item.sku?.skuRangePrice,
+      item.sku?.base,
+      item.sku?.def?.price,
+      item.sku?.promotionPrice,
+      item.sku?.price,
+      item.price,
+      item.min_price,
+      item.min_group_price,
+      item.priceRange
+    ])
 
     let formattedDescription = `Source: ${cleanUrl}`
     if (rawProps.length > 0) {
-      const translatedProps = await Promise.all(
-        rawProps.slice(0, 35).map((p) => translateToEnglish(p))
-      )
+      const translatedProps = await translateBatchToEnglish(rawProps.slice(0, 35))
       formattedDescription = `Specifications:\n• ${translatedProps.join('\n• ')}\n\nSource: ${cleanUrl}`
     }
 
-    // Конвертация Юань -> Евро (курсы + маржа)
     const cnyToEur = 0.14
     const markupMultiplier = 1.35
-    const finalPrice = rawPrice > 0 ? Math.round(rawPrice * cnyToEur * markupMultiplier * 100) / 100 : 0
-
-    if (!mainImage && allImages.length === 0) {
-      throw new Error('Failed to retrieve product images. Link might be invalid or restricted.')
-    }
+    const calculatedPrice = rawPrice > 0 ? Math.round(rawPrice * cnyToEur * markupMultiplier * 100) / 100 : 0
+    const finalPrice = isNaN(calculatedPrice) ? 0 : calculatedPrice
 
     await prisma.product.create({
       data: {
@@ -328,19 +303,16 @@ export async function updateProduct(id: string, formData: FormData) {
 
   const rawImages = formData.get('images') as string
   const images = rawImages
-    ? rawImages
-        .split('\n')
-        .map((url) => url.trim())
-        .filter((url) => url.length > 0)
+    ? rawImages.split('\n').map((url) => url.trim()).filter((url) => url.length > 0)
     : []
 
   await prisma.product.update({
     where: { id },
     data: {
       title,
-      price,
+      price: isNaN(price) ? 0 : price,
       description,
-      image: image || (images[0] ?? null),
+      image: image || (images[0] ?? ''),
       images,
     },
   })
