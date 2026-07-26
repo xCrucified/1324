@@ -12,35 +12,12 @@ export default async function Page({ searchParams }: Props) {
   const params = await searchParams;
   const selectedCategory = params.category || "Home";
 
-  // Формируем фильтр для базы данных
-  let whereClause = {};
-  if (
-    selectedCategory !== "Home" &&
-    selectedCategory !== "Flash Sale" &&
-    selectedCategory !== "New Arrivals" &&
-    selectedCategory !== "Sellers"
-  ) {
-    whereClause = {
-      category: {
-        name: selectedCategory,
-      },
-    };
-  }
-
-  const products = await prisma.product.findMany({
-    where: whereClause,
-    include: { category: true },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
-
   return (
-    <div>
+    <>
       <TopBar />
       <Header />
-      <Main selectedCategory={selectedCategory} products={products} />
+      <Main selectedCategory={selectedCategory} />{" "}
       <Footer />
-    </div>
+    </>
   );
 }

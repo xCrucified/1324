@@ -12,11 +12,11 @@ import { cn } from "@/lib/utils";
 import { useShopStore } from "@/store/use-shop";
 import ActionToast from "./ui/action-toast";
 import { Product as PrismaProduct } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
 interface Props {
   className?: string;
   selectedCategory?: string;
-  products: PrismaProduct[];
 }
 
 // Локальный тип для отображения карточки товара
@@ -34,7 +34,31 @@ type UIProduct = {
   freeShip?: boolean;
 };
 
-export const Main: React.FC<Props> = ({ className, products = [], selectedCategory = 'Home' }) => {
+type PrismaProductWithFallbackFields = PrismaProduct & {
+  title?: string;
+  image?: string;
+  name?: string;
+};
+
+export const Main: React.FC<Props> = ({ className, selectedCategory = 'Home' }) => {
+  const [products, setProducts] = useState<PrismaProduct[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    prisma.product
+      .findMany({ include: { category: true }, orderBy: { createdAt: 'desc' } })
+      .then((res) => {
+        if (mounted) setProducts(res);
+      })
+      .catch(() => {
+        if (mounted) setProducts([]);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
   const [toastVisible, setToastVisible] = useState(false);
   const [savedToast, setSavedToast] = useState(false);
   const [savedMessage, setSavedMessage] = useState('');
@@ -91,21 +115,23 @@ export const Main: React.FC<Props> = ({ className, products = [], selectedCatego
   );
 
   // Маппим Prisma-продукты в формат, который ожидает интерфейс UI
-  const catalog: UIProduct[] = useMemo(
-    () =>
-      products.map((p) => ({
+  const catalog: UIProduct[] = useMemo(() =>
+    products.map((p) => {
+      const product = p as PrismaProductWithFallbackFields;
+      return {
         id: p.id,
-        name: p.title, // В схеме Prisma поле называется title
+        name: product.title || product.name || '',
         price: p.price,
         originalPrice: undefined,
         sold: 0,
         rating: 5,
         reviews: 0,
-        shop: "Pentu",
-        img: p.image || "/placeholder.png",
+        shop: 'Pentu',
+        img: product.image || '/placeholder.png',
         badge: undefined,
         freeShip: true,
-      })),
+      };
+    }),
     [products]
   );
 
