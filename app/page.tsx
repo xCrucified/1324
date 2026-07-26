@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/prisma";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
 import Main from "@/components/main";
@@ -11,11 +12,33 @@ export default async function Page({ searchParams }: Props) {
   const params = await searchParams;
   const selectedCategory = params.category || "Home";
 
+  let whereClause = {};
+  if (
+    selectedCategory !== "Home" &&
+    selectedCategory !== "Flash Sale" &&
+    selectedCategory !== "New Arrivals" &&
+    selectedCategory !== "Sellers"
+  ) {
+    whereClause = {
+      category: {
+        name: selectedCategory,
+      },
+    };
+  }
+
+  const products = await prisma.product.findMany({
+    where: whereClause,
+    include: { category: true },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
   return (
     <>
       <TopBar />
       <Header />
-      <Main selectedCategory={selectedCategory} />{" "}
+      <Main products={products} selectedCategory={selectedCategory} />
       <Footer />
     </>
   );

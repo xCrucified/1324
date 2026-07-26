@@ -12,14 +12,13 @@ import { cn } from "@/lib/utils";
 import { useShopStore } from "@/store/use-shop";
 import ActionToast from "./ui/action-toast";
 import { Product as PrismaProduct } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
 
 interface Props {
   className?: string;
   selectedCategory?: string;
+  products: PrismaProduct[];
 }
 
-// Локальный тип для отображения карточки товара
 type UIProduct = {
   id: string;
   name: string;
@@ -40,25 +39,7 @@ type PrismaProductWithFallbackFields = PrismaProduct & {
   name?: string;
 };
 
-export const Main: React.FC<Props> = ({ className, selectedCategory = 'Home' }) => {
-  const [products, setProducts] = useState<PrismaProduct[]>([]);
-
-  useEffect(() => {
-    let mounted = true;
-
-    prisma.product
-      .findMany({ include: { category: true }, orderBy: { createdAt: 'desc' } })
-      .then((res) => {
-        if (mounted) setProducts(res);
-      })
-      .catch(() => {
-        if (mounted) setProducts([]);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+export const Main: React.FC<Props> = ({ className, products = [], selectedCategory = 'Home' }) => {
   const [toastVisible, setToastVisible] = useState(false);
   const [savedToast, setSavedToast] = useState(false);
   const [savedMessage, setSavedMessage] = useState('');
@@ -114,13 +95,13 @@ export const Main: React.FC<Props> = ({ className, selectedCategory = 'Home' }) 
     [savedItems, toggleSave]
   );
 
-  // Маппим Prisma-продукты в формат, который ожидает интерфейс UI
-  const catalog: UIProduct[] = useMemo(() =>
+  const catalog: (UIProduct & { title: string; image: string | null })[] = useMemo(() =>
     products.map((p) => {
       const product = p as PrismaProductWithFallbackFields;
       return {
         id: p.id,
         name: product.title || product.name || '',
+        title: product.title || product.name || '',
         price: p.price,
         originalPrice: undefined,
         sold: 0,
@@ -128,6 +109,7 @@ export const Main: React.FC<Props> = ({ className, selectedCategory = 'Home' }) 
         reviews: 0,
         shop: 'Pentu',
         img: product.image || '/placeholder.png',
+        image: product.image || null,
         badge: undefined,
         freeShip: true,
       };
@@ -171,7 +153,7 @@ export const Main: React.FC<Props> = ({ className, selectedCategory = 'Home' }) 
         {selectedCategory === 'Home' && !query.trim() && (
           <>
             <Banner />
-            <FlashSale products={products} onAdd={handleAdd} />
+            <FlashSale products={catalog} onAdd={handleAdd} />
             <CategoryGrid />
             <TrustBar />
           </>
