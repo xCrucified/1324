@@ -1,4 +1,3 @@
-import { prisma } from "@/lib/prisma";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
 import Main from "@/components/main";
