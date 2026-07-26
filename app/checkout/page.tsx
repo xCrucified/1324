@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
@@ -135,7 +136,7 @@ export default function CheckoutPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-display text-oak mb-1">Ім'я *</label>
+                <label className="block text-xs font-display text-oak mb-1">Ім`я *</label>
                 <input
                   type="text"
                   required
@@ -209,7 +210,7 @@ export default function CheckoutPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-display text-oak mb-1">Telegram (необов'язково)</label>
+              <label className="block text-xs font-display text-oak mb-1">Telegram (необов`язково)</label>
               <input
                 type="text"
                 value={telegram}

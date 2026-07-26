@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { prisma } from '@/lib/prisma'
 import { updateProduct } from '../../actions'
 import Link from 'next/link'
@@ -98,7 +99,7 @@ export default async function EditProductPage({ params }: EditPageProps) {
           <textarea 
             name="images" 
             defaultValue={imagesListText} 
-            className="w-full border rounded p-2 text-sm h-32 font-mono text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-black/5"
+            className="w-full border rounded p-2 text-sm h-32 font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-black/5"
             placeholder="https://example.com/photo1.jpg&#10;https://example.com/photo2.jpg"
           />
         </div>

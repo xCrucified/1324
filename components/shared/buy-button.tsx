@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Lock, ShieldCheck, CreditCard, ExternalLink, X, UserCheck } from 'lucide-react';
@@ -14,19 +14,17 @@ interface BuyButtonProps {
 export default function BuyButton({ productId, priceInUah, title }: BuyButtonProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
-  useEffect(() => {
-  if(session?.user?.email){
-    setEmail(session.user.email);
-  }
-},[session]);
   const [loading, setLoading] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
 
-  // Поля форми доставки
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
- const [email, setEmail] = useState('');
+  // Инициализируем стейт начальными значениями из сессии (без useEffect)
+  const [firstName, setFirstName] = useState(() => session?.user?.name?.split(' ')[0] || '');
+  const [lastName, setLastName] = useState(() => {
+    const parts = session?.user?.name?.split(' ') || [];
+    return parts.length > 1 ? parts.slice(1).join(' ') : '';
+  });
+  const [email, setEmail] = useState(() => session?.user?.email || '');
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('');
   const [warehouse, setWarehouse] = useState('');
@@ -39,163 +37,75 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
     setShowCheckoutModal(true);
   };
 
-const handlePaymentSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  console.log('==============================');
-  console.log('🚀 START PAYMENT');
-  console.log('==============================');
+    try {
+      setLoading(true);
 
-  try {
-    setLoading(true);
+      const paymentData = {
+        priceAmount: priceInUah,
+        priceInUah,
+        total: priceInUah,
+        firstName,
+        lastName,
+        email: email || session?.user?.email || 'client@pentu24.com',
+        phone,
+        city,
+        warehouse,
+        orderId: productId,
+        orderDescription: `${title} (${priceInUah} ₴)`,
+        items: [
+          {
+            productId,
+            name: title,
+            price: priceInUah,
+            quantity: 1,
+          },
+        ],
+      };
 
-    const paymentData = {
-      priceAmount: priceInUah,
-      priceInUah,
-      total: priceInUah,
-
-      firstName,
-      lastName,
-      email: email || 'client@pentu24.com',
-
-      phone,
-      city,
-      warehouse,
-
-      orderId: productId,
-
-      orderDescription: `${title} (${priceInUah} ₴)`,
-
-      items: [
-        {
-          productId,
-          name: title,
-          price: priceInUah,
-          quantity: 1,
+      const response = await fetch('/api/payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      ],
-    };
+        body: JSON.stringify(paymentData),
+      });
 
+      const result = await response.json();
 
-    console.log('📦 SEND DATA');
-    console.log(paymentData);
+      if (!response.ok) {
+        alert(result.error || 'Помилка створення замовлення');
+        setLoading(false);
+        return;
+      }
 
+      if (!result.payment_url) {
+        alert('Monobank посилання не отримано');
+        setLoading(false);
+        return;
+      }
 
-    const response = await fetch('/api/payment', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(paymentData),
-    });
-
-
-    console.log(
-      '📡 STATUS:',
-      response.status
-    );
-
-
-    const result = await response.json();
-
-
-    console.log('📥 SERVER RESPONSE');
-    console.log(result);
-
-
-
-    if (!response.ok) {
-
-      console.error(
-        '❌ PAYMENT ERROR'
+      const monoWindow = window.open(
+        result.payment_url,
+        '_blank',
+        'noopener,noreferrer'
       );
 
-      alert(
-        result.error ||
-        'Помилка створення замовлення'
-      );
+      if (!monoWindow) {
+        alert('Браузер заблокував відкриття Monobank. Дозвольте спливаючі вікна.');
+      } else {
+        setShowCheckoutModal(false);
+      }
 
+    } catch (error) {
+      console.error('Payment fetch error:', error);
+      alert('Помилка з’єднання з сервером оплати');
+    } finally {
       setLoading(false);
-
-      return;
     }
-
-
-
-    if (!result.payment_url) {
-
-      console.error(
-        '❌ NO PAYMENT URL'
-      );
-
-      alert(
-        'Monobank посилання не отримано'
-      );
-
-      setLoading(false);
-
-      return;
-    }
-
-
-
-    console.log(
-      '🏦 OPEN MONOBANK:',
-      result.payment_url
-    );
-
-
-    const monoWindow = window.open(
-      result.payment_url,
-      '_blank',
-      'noopener,noreferrer'
-    );
-
-
-    if (!monoWindow) {
-
-      console.error(
-        '❌ POPUP BLOCKED'
-      );
-
-      alert(
-        'Браузер заблокував відкриття Monobank. Дозвольте спливаючі вікна.'
-      );
-
-    } else {
-
-      console.log(
-        '✅ MONOBANK OPENED'
-      );
-
-    }
-
-
-
-    setLoading(false);
-
-    setShowCheckoutModal(false);
-
-
-
-  } catch (error) {
-
-
-    console.error(
-      '🔥 PAYMENT FETCH ERROR'
-    );
-
-    console.error(error);
-
-
-    alert(
-      'Помилка з’єднання з сервером оплати'
-    );
-
-
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <>
@@ -235,13 +145,13 @@ const handlePaymentSubmit = async (e: React.FormEvent) => {
         </div>
       </div>
 
-      {/* Модалка оформлення замовлення (Дані покупця + кнопка оплати) */}
+      {/* Модалка оформлення замовлення */}
       {showCheckoutModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 space-y-5 relative my-8 animate-in fade-in zoom-in-95 duration-200">
             <button
               onClick={() => setShowCheckoutModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -254,13 +164,13 @@ const handlePaymentSubmit = async (e: React.FormEvent) => {
             <form onSubmit={handlePaymentSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Ім'я *</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Ім&apos;я *</label>
                   <input
                     type="text"
                     required
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:bg-white outline-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:bg-white outline-none text-gray-900"
                     placeholder="Ім'я"
                   />
                 </div>
@@ -271,7 +181,7 @@ const handlePaymentSubmit = async (e: React.FormEvent) => {
                     required
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:bg-white outline-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:bg-white outline-none text-gray-900"
                     placeholder="Прізвище"
                   />
                 </div>
@@ -285,7 +195,7 @@ const handlePaymentSubmit = async (e: React.FormEvent) => {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:bg-white outline-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:bg-white outline-none text-gray-900"
                     placeholder="mail@gmail.com"
                   />
                 </div>
@@ -296,7 +206,7 @@ const handlePaymentSubmit = async (e: React.FormEvent) => {
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:bg-white outline-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:bg-white outline-none text-gray-900"
                     placeholder="+380..."
                   />
                 </div>
@@ -310,7 +220,7 @@ const handlePaymentSubmit = async (e: React.FormEvent) => {
                     required
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:bg-white outline-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:bg-white outline-none text-gray-900"
                     placeholder="Київ"
                   />
                 </div>
@@ -321,7 +231,7 @@ const handlePaymentSubmit = async (e: React.FormEvent) => {
                     required
                     value={warehouse}
                     onChange={(e) => setWarehouse(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:bg-white outline-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:bg-white outline-none text-gray-900"
                     placeholder="№1 або поштомат"
                   />
                 </div>
@@ -361,7 +271,7 @@ const handlePaymentSubmit = async (e: React.FormEvent) => {
           <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-5 relative animate-in fade-in zoom-in-95 duration-200">
             <button
               onClick={() => setShowAuthModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>

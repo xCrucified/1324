@@ -175,8 +175,8 @@ export const Header: React.FC<Props> = ({ className }) => {
               { label: "Нові надходження", key: "New Arrivals" },
               { label: "Продавці", key: "Sellers" },
             ].map((itemObj) => {
-              const itemLabel = typeof itemObj === 'string' ? itemObj : itemObj.label;
-              const itemKey = typeof itemObj === 'string' ? itemObj : itemObj.key;
+              const itemLabel = itemObj.label;
+              const itemKey = 'key' in itemObj ? itemObj.key : itemObj.label;
               const href = itemKey === "Головна" ? "/" : `/?category=${encodeURIComponent(itemKey)}`;
               const isActive = currentCategory === itemKey;
 

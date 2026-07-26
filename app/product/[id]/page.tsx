@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -63,7 +62,7 @@ export default async function ProductPage({ params }: Props) {
               <span>/</span>
             </>
           )}
-          <span className="text-bark truncate max-w-[200px]">{product.title}</span>
+          <span className="text-bark truncate max-w-50">{product.title}</span>
         </div>
 
         {/* Основной блок товара */}

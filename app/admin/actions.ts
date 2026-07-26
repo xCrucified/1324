@@ -81,7 +81,7 @@ function parsePrice(val: any): number {
     if (!matches || matches.length === 0) return 0
     const numbers = matches.map(n => parseFloat(n)).filter(n => !isNaN(n))
     if (numbers.length === 0) return 0
-    let minVal = Math.min(...numbers)
+    const minVal = Math.min(...numbers)
     return minVal > 50000 ? minVal / 100 : minVal
   }
 
@@ -242,7 +242,7 @@ export async function parseAndSaveProduct(rawInputUrl: string) {
     extractUrls(item.item_imgs)
 
     let allImages = Array.from(imagesSet)
-    let mainImage = allImages[0] || 'https://via.placeholder.com/800x800?text=No+Image'
+    const mainImage = allImages[0] || 'https://via.placeholder.com/800x800?text=No+Image'
     if (allImages.length === 0) allImages = [mainImage]
 
     const propsSource = item.props_list || item.attributes || item.goods_properties || item.props || []
