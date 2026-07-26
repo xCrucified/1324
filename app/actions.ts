@@ -1,6 +1,7 @@
 'use server';
 
-import { prisma } from '@/lib/prisma'; // Убедись, что у тебя настроен клиент prisma, либо импортируй из своего файла
+import { prisma } from '@/lib/prisma';
+import { auth } from '@/app/api/auth/[...nextauth]/route'; // Путь к твоему файлу конфига NextAuth
 import { revalidatePath } from 'next/cache';
 
 // Создание заказа из чекаута
@@ -16,8 +17,12 @@ export async function createOrder(data: {
   items: { productId: string; quantity: number; price: number }[];
 }) {
   try {
+    const session = await auth();
+    const userId = session?.user?.id; 
+
     const order = await prisma.order.create({
       data: {
+        userId: userId || null, 
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
@@ -46,10 +51,20 @@ export async function createOrder(data: {
   }
 }
 
-// Получение списка заказов
+// Получение списка заказов только текущего пользователя
 export async function getOrders() {
   try {
+    const session = await auth();
+    
+    // Если пользователь не авторизован, возвращаем пустой список
+    if (!session || !session.user?.id) {
+      return [];
+    }
+
     return await prisma.order.findMany({
+      where: {
+        userId: session.user.id, // Фильтруем заказы строго по ID вошедшего юзера
+      },
       orderBy: { createdAt: 'desc' },
       include: {
         orderItems: {

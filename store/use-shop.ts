@@ -22,14 +22,6 @@ export interface SavedItem {
   shop: string;
 }
 
-export interface OrderItem {
-  id: string;
-  date: string;
-  total: number;
-  status: 'Processing' | 'Shipped' | 'Delivered';
-  itemsCount: number;
-}
-
 interface ShopStore {
   query: string;
   setQuery: (query: string) => void;
@@ -42,9 +34,6 @@ interface ShopStore {
 
   savedItems: SavedItem[];
   toggleSave: (product: SavedItem) => void;
-
-  orders: OrderItem[];
-  addOrder: (order: OrderItem) => void;
 }
 
 export const useShopStore = create<ShopStore>()(
@@ -85,11 +74,6 @@ export const useShopStore = create<ShopStore>()(
         } else {
           set({ savedItems: [...saved, product] });
         }
-      },
-
-      orders: [],
-      addOrder: (order) => {
-        set({ orders: [order, ...get().orders] });
       },
     }),
     {

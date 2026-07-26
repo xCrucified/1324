@@ -1,6 +1,7 @@
-import React from 'react';
-import Link from 'next/link';
-import { ProductCard } from './product-card';
+import React from "react";
+import Link from "next/link";
+import { ProductCard } from "./product-card";
+import { useShopStore } from "@/store/use-shop";
 
 interface Product {
   id: string;
@@ -23,18 +24,25 @@ interface Props {
   className?: string;
 }
 
-export const ProductSection: React.FC<Props> = ({ title, products, onAdd, className }) => {
+export const ProductSection: React.FC<Props> = ({
+  title,
+  products,
+  onAdd,
+  className,
+}) => {
+  const { savedItems, toggleSave } = useShopStore();
   let categoryParam = "Home";
   if (title.includes("New Arrivals")) categoryParam = "New Arrivals";
   else if (title.includes("Hot Items")) categoryParam = "Flash Sale";
   else if (title.includes("Recommended")) categoryParam = "Home";
+  // Note: compute saved status per product when rendering
 
   return (
-    <section className={`max-w-7xl mx-auto px-4 py-6 ${className || ''}`}>
+    <section className={`max-w-7xl mx-auto px-4 py-6 ${className || ""}`}>
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-display font-bold text-lg text-bark">{title}</h2>
-        
-        <Link 
+
+        <Link
           href={`/?category=${encodeURIComponent(categoryParam)}`}
           className="font-body text-xs text-caramel hover:text-amber font-bold transition-colors"
         >
@@ -47,8 +55,17 @@ export const ProductSection: React.FC<Props> = ({ title, products, onAdd, classN
           <ProductCard
             key={product.id}
             product={product}
+            isSaved={savedItems.some((s) => s.id === product.id)}
             onAdd={() => onAdd(product)}
-            onToggleSave={() => {}}
+            onToggleSave={() =>
+              toggleSave({
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                img: product.img,
+                shop: product.shop,
+              })
+            }
           />
         ))}
       </div>

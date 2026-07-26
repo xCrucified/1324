@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -16,10 +18,22 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // Здесь можно подключить вход по Email/Паролю, если ты настроишь Credentials provider
-      console.log("Login submitted:", { email, password });
+      const res = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
+      });
+
+      if (res?.error) {
+        setError("Wrong email or password");
+        setLoading(false);
+        return;
+      }
+
+      router.push("/");
+      router.refresh();
     } catch (err) {
-      setError("Ошибка при входе. Проверьте данные.");
+      setError("Error while entering...");
     } finally {
       setLoading(false);
     }
@@ -71,9 +85,9 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition disabled:opacity-50"
+            className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition disabled:opacity-50 cursor-pointer"
           >
-            {loading ? "Загрузка..." : "Войти"}
+            {loading ? "Вход..." : "Войти"}
           </button>
         </form>
 
