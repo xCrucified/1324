@@ -38,7 +38,7 @@ export default async function Page({ searchParams }: Props) {
     <>
       <TopBar />
       <Header />
-      <Main products={(products.map(x => x))} selectedCategory={selectedCategory} />
+      <Main products={products} />
       <Footer />
     </>
   );
