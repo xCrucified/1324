@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import React, { useState } from 'react';
-import { useShopStore } from '@/store/use-shop'; // Укажи правильный путь к своему стору
+import { useShopStore } from '@/store/use-shop';
 
 interface Props {
   className?: string;
@@ -24,7 +24,8 @@ const CATEGORIES = [
 export const Header: React.FC<Props> = ({ className }) => {
   const [searchActive, setSearchActive] = useState(false);
   
-  const { cart, query, setQuery } = useShopStore();
+  const { query, setQuery } = useShopStore();
+  const totalCartItems = 0;
 
   return (
     <header
@@ -121,7 +122,7 @@ export const Header: React.FC<Props> = ({ className }) => {
                 <circle cx="9" cy="17.5" r="1.2" fill="currentColor" />
                 <circle cx="15" cy="17.5" r="1.2" fill="currentColor" />
               </svg>
-              {cart > 0 && (
+              {totalCartItems > 0 && (
                 <span
                   className="absolute -top-1.5 -right-1.5 bg-amber text-cream rounded-full font-body leading-none flex items-center justify-center"
                   style={{
@@ -131,7 +132,7 @@ export const Header: React.FC<Props> = ({ className }) => {
                     fontWeight: 700,
                   }}
                 >
-                  {cart}
+                  {totalCartItems}
                 </span>
               )}
             </div>
