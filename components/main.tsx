@@ -39,7 +39,7 @@ type Product = {
   freeShip?: boolean;
 };
 
-export const Main: React.FC<Props> = ({ className, products, selectedCategory = 'Home' }) => {
+export const Main: React.FC<Props> = ({ className, products = [], selectedCategory = 'Home' }) => {
   const [toastVisible, setToastVisible] = useState(false);
   const [savedToast, setSavedToast] = useState(false);
   const [savedMessage, setSavedMessage] = useState('');

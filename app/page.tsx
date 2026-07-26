@@ -29,7 +29,6 @@ export default async function Page({ searchParams }: Props) {
 
   // Получаем отфильтрованные продукты из базы данных
   const products = await prisma.product.findMany({
-    where: whereClause,
     include: { category: true },
     orderBy: {
       createdAt: "desc",
