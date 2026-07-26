@@ -2,10 +2,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 interface Props {
   className?: string;
-  onAdd: (product: any) => void; // <-- Разрешаем передавать сформированный товар
+  onAdd: (product: any) => void;
   products: {
     id: string;
     title: string;
@@ -53,12 +54,12 @@ export const FlashSale: React.FC<Props> = ({
               className="font-display text-bark font-bold"
               style={{ fontSize: '1.1rem' }}
             >
-              ⚡ Flash Sale
+              ⚡ Швидкий розпродаж
             </span>
 
             <div className="flex items-center gap-1">
               <span className="font-body text-xs text-oak">
-                Ends in
+                Закінчується через
               </span>
 
               {[h, m, s].map((unit, i) => (
@@ -84,16 +85,17 @@ export const FlashSale: React.FC<Props> = ({
           </div>
 
           <button className="font-body text-caramel text-xs hover:text-amber transition-colors">
-            View all →
+            Переглянути всі →
           </button>
         </div>
 
         {/* Products */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-parchment">
           {flashProducts.map((product) => (
-            <div
+            <Link
               key={product.id}
-              className="bg-ivory p-3 group cursor-pointer"
+              href={`/product/${product.id}`}
+              className="bg-ivory p-3 group cursor-pointer block hover:bg-wheat/20 transition-colors"
             >
               <div
                 className="relative overflow-hidden rounded-sm mb-2 bg-parchment"
@@ -115,28 +117,32 @@ export const FlashSale: React.FC<Props> = ({
                   className="font-display text-amber font-bold"
                   style={{ fontSize: '1.05rem' }}
                 >
-                  €{product.price.toFixed(2)}
+                  {product.price.toFixed(2)} ₴
                 </span>
               </div>
 
               <button
-                // Формируем объект товара, который ожидает функция handleAdd в main.tsx
-                onClick={() => onAdd({
-                  id: product.id,
-                  name: product.title,
-                  price: product.price,
-                  originalPrice: product.price * 1.2,
-                  img: product.image || '/placeholder.png',
-                  shop: 'Pentu',
-                  sold: 0,
-                  rating: 5,
-                  reviews: 0
-                })}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onAdd({
+                    id: product.id,
+                    name: product.title,
+                    price: product.price,
+                    originalPrice: product.price * 1.2,
+                    img: product.image || '/placeholder.png',
+                    shop: 'Pentu',
+                    sold: 0,
+                    rating: 5,
+                    reviews: 0,
+                  });
+                }}
                 className="w-full font-body text-xs py-1.5 bg-parchment hover:bg-caramel hover:text-cream text-oak border border-oak transition-colors rounded-sm"
               >
-                Add to Cart
+                У кошик
               </button>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

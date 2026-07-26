@@ -5,6 +5,8 @@ import Link from 'next/link';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import TopBar from '@/components/shared/top-bar';
+import ProductGallery from '@/components/shared/product-gallery';
+import BuyButton from '@/components/shared/buy-button';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -23,7 +25,13 @@ export default async function ProductPage({ params }: Props) {
     return notFound();
   }
 
-  // Заглушка для отзывов и продавца (можно позже вынести в базу)
+  // Собираем все доступные изображения из массива images + фоллбек на одиночное поле image
+  const allImages = [
+    ...(product.images && product.images.length > 0 ? product.images : []),
+    ...(product.image && (!product.images || !product.images.includes(product.image)) ? [product.image] : []),
+  ];
+
+  // Заглушка для отзывов и продавца
   const seller = {
     name: "Pentu Artisan Studio",
     rating: 4.9,
@@ -60,14 +68,8 @@ export default async function ProductPage({ params }: Props) {
 
         {/* Основной блок товара */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-ivory border border-parchment p-6 rounded-sm">
-          {/* Изображение */}
-          <div className="relative aspect-square bg-parchment rounded-sm overflow-hidden border border-mist">
-            <img
-              src={product.image || "/placeholder.png"}
-              alt={product.title}
-              className="object-cover"
-            />
-          </div>
+          {/* Галерея изображений */}
+          <ProductGallery images={allImages} title={product.title} />
 
           {/* Информация о товаре */}
           <div className="flex flex-col justify-between">
@@ -81,7 +83,8 @@ export default async function ProductPage({ params }: Props) {
 
               <div className="flex items-center gap-3 mt-3">
                 <span className="font-display font-bold text-2xl text-amber">
-                  €{product.price.toFixed(2)}
+                  {/* Заменили € на ₴ для консистентности с кнопкой */}
+                  {product.price} ₴
                 </span>
                 <span className="text-xs font-body bg-wheat text-bark px-2 py-1 rounded-sm">
                   Free Shipping
@@ -93,6 +96,15 @@ export default async function ProductPage({ params }: Props) {
                 <p className="font-body text-xs text-oak leading-relaxed">
                   {product.description || "No description provided for this artisan item. Crafted with care and high attention to detail."}
                 </p>
+              </div>
+
+              {/* Блок кнопок покупки */}
+              <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                <BuyButton 
+                  productId={product.id} 
+                  priceInUah={product.price} // Исправлен проп с price на priceInUah
+                  title={product.title} 
+                />
               </div>
             </div>
 

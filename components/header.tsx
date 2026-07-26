@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation'; // Импортируем useSearchParams
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useShopStore } from '@/store/use-shop';
 import { getOrders } from '@/app/actions';
 import CartModal from './shared/cart-modal';
@@ -15,16 +15,16 @@ interface Props {
 }
 
 const CATEGORIES = [
-  { label: "Ceramics", icon: "🏺", count: "2.4k items" },
-  { label: "Coffee & Tea", icon: "☕", count: "5.1k items" },
-  { label: "Textiles", icon: "🧵", count: "3.8k items" },
-  { label: "Candles", icon: "🕯️", count: "1.9k items" },
-  { label: "Woodwork", icon: "🪵", count: "2.0k items" },
-  { label: "Botanicals", icon: "🌿", count: "1.3k items" },
-  { label: "Stationery", icon: "📄", count: "0.8k items" },
-  { label: "Kitchenware", icon: "🥄", count: "4.2k items" },
-  { label: "Homeware", icon: "🏡", count: "6.5k items" },
-  { label: "Gifts", icon: "🎁", count: "3.1k items" },
+  { label: "Кераміка", icon: "🏺", count: "2.4k товарів" },
+  { label: "Кава та чай", icon: "☕", count: "5.1k товарів" },
+  { label: "Текстиль", icon: "🧵", count: "3.8k товарів" },
+  { label: "Свічки", icon: "🕯️", count: "1.9k товарів" },
+  { label: "Вироби з деревини", icon: "🪵", count: "2.0k товарів" },
+  { label: "Рослини та ботаніка", icon: "🌿", count: "1.3k товарів" },
+  { label: "Канцелярія", icon: "📄", count: "0.8k товарів" },
+  { label: "Кухонний посуд", icon: "🥄", count: "4.2k товарів" },
+  { label: "Товари для дому", icon: "🏡", count: "6.5k товарів" },
+  { label: "Подарунки", icon: "🎁", count: "3.1k товарів" },
 ];
 
 export const Header: React.FC<Props> = ({ className }) => {
@@ -37,8 +37,8 @@ export const Header: React.FC<Props> = ({ className }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  // Определяем активную категорию из URL (если параметра нет, то это 'Home')
-  const currentCategory = searchParams.get('category') || 'Home';
+  // Визначаємо активну категорію з URL (якщо параметра немає, то це 'Головна')
+  const currentCategory = searchParams.get('category') || 'Головна';
 
   const { items, savedItems, query, setQuery } = useShopStore();
   const cartCount = items.reduce((total, item) => total + item.quantity, 0);
@@ -70,7 +70,7 @@ export const Header: React.FC<Props> = ({ className }) => {
               Pentu24
             </span>
             <span className="font-body text-oak uppercase tracking-widest" style={{ fontSize: "0.7rem" }}>
-              Marketplace
+              Маркетплейс
             </span>
           </Link>
 
@@ -79,22 +79,22 @@ export const Header: React.FC<Props> = ({ className }) => {
             className={`flex flex-1 border transition-colors rounded-sm overflow-hidden ${searchActive ? "border-oak" : "border-mist"}`}
             style={{ maxWidth: 680 }}
           >
-            <select className="bg-parchment border-r border-oak text-bark font-body px-3 py-2.5 text-xs outline-none shrink-0 hidden sm:block" style={{ minWidth: 110 }}>
-              <option>All Categories</option>
+            <select className="bg-parchment border-r border-oak text-bark font-body px-3 py-2.5 text-xs outline-none shrink-0 hidden sm:block" style={{ minWidth: 125 }}>
+              <option>Усі категорії</option>
               {CATEGORIES.map((c) => (
                 <option key={c.label}>{c.label}</option>
               ))}
             </select>
             <input
               className="flex-1 bg-ivory px-4 py-2.5 font-body text-bark text-sm outline-none placeholder-oak"
-              placeholder="Search for ceramics, coffee, candles, linen…"
+              placeholder="Шукайте кераміку, каву, свічки, льон…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onFocus={() => setSearchActive(true)}
               onBlur={() => setSearchActive(false)}
               style={{ minWidth: 0 }}
             />
-            <button type="submit" className="bg-caramel hover:bg-amber transition-colors px-5 shrink-0 flex items-center justify-center">
+            <button type="submit" className="bg-caramel hover:bg-amber transition-colors px-5 shrink-0 flex items-center justify-center" title="Шукати">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <circle cx="6.5" cy="6.5" r="5" stroke="#FAF5EC" strokeWidth="1.5" />
                 <path d="M10.5 10.5L14 14" stroke="#FAF5EC" strokeWidth="1.5" strokeLinecap="round" />
@@ -123,7 +123,7 @@ export const Header: React.FC<Props> = ({ className }) => {
                   </span>
                 )}
               </div>
-              <span className="font-body" style={{ fontSize: "0.6rem" }}>Saved</span>
+              <span className="font-body" style={{ fontSize: "0.6rem" }}>Збережене</span>
             </button>
 
             <button 
@@ -141,7 +141,7 @@ export const Header: React.FC<Props> = ({ className }) => {
                   </span>
                 )}
               </div>
-              <span className="font-body" style={{ fontSize: "0.6rem" }}>Orders</span>
+              <span className="font-body" style={{ fontSize: "0.6rem" }}>Замовлення</span>
             </button>
 
             <button 
@@ -160,32 +160,40 @@ export const Header: React.FC<Props> = ({ className }) => {
                   </span>
                 )}
               </div>
-              <span className="font-body" style={{ fontSize: "0.6rem" }}>Cart</span>
+              <span className="font-body" style={{ fontSize: "0.6rem" }}>Кошик</span>
             </button>
           </div>
         </div>
 
-        {/* Навигация с динамической подсветкой и подчеркиванием активной вкладки */}
+        {/* Навігація з динамічним підсвічуванням та підкресленням активної вкладки */}
         <div className="border-t border-parchment bg-ivory overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           <div className="max-w-7xl mx-auto px-4 flex gap-0">
-            {["Home", ...CATEGORIES.map((c) => c.label), "Flash Sale", "New Arrivals", "Sellers"].map((item) => {
-              const href = item === "Home" ? "/" : `/?category=${encodeURIComponent(item)}`;
-              const isActive = currentCategory === item;
+            {[
+              { label: "Головна", key: "Головна" },
+              ...CATEGORIES,
+              { label: "Швидкі знижки", key: "Flash Sale" },
+              { label: "Нові надходження", key: "New Arrivals" },
+              { label: "Продавці", key: "Sellers" },
+            ].map((itemObj) => {
+              const itemLabel = typeof itemObj === 'string' ? itemObj : itemObj.label;
+              const itemKey = typeof itemObj === 'string' ? itemObj : itemObj.key;
+              const href = itemKey === "Головна" ? "/" : `/?category=${encodeURIComponent(itemKey)}`;
+              const isActive = currentCategory === itemKey;
 
               return (
                 <Link
-                  key={item}
+                  key={itemKey}
                   href={href}
                   className={`font-body whitespace-nowrap px-4 py-2 text-xs transition-colors border-b-2 inline-block ${
                     isActive
                       ? "border-amber text-amber font-bold"
-                      : item === "Flash Sale"
+                      : itemKey === "Flash Sale"
                       ? "border-transparent text-amber font-bold hover:text-amber/80"
                       : "border-transparent text-bark hover:text-oak hover:border-oak"
                   }`}
                   style={{ letterSpacing: "0.03em" }}
                 >
-                  {item === "Flash Sale" ? "⚡ " + item : item}
+                  {itemKey === "Flash Sale" ? "⚡ " + itemLabel : itemLabel}
                 </Link>
               );
             })}

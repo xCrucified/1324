@@ -1,41 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { prisma } from '@/lib/prisma'
-import { deleteProduct } from './actions'
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
+import { deleteProduct } from './actions'
 
-export const dynamic = 'force-dynamic'
+interface AdminDashboardProps {
+  products: any[]
+  orders: any[]
+}
 
-export default async function AdminPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ tab?: string }> | { tab?: string }
-}) {
-  // Безпечно отримуємо параметри рядка запиту для будь-якої версії Next.js
-  const resolvedParams = await Promise.resolve(searchParams)
-  const activeTab = resolvedParams?.tab === 'orders' ? 'orders' : 'products'
-
-  const products = await prisma.product.findMany({
-    orderBy: { createdAt: 'desc' },
-  }).catch(() => [])
-
-  // Отримуємо оплачені замовлення разом із даними користувача
-  let orders: any[] = []
-  try {
-    orders = await prisma.order.findMany({
-      include: {
-        user: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    })
-  } catch (e) {
-    // Якщо таблиця замовлень має іншу структуру або ще не створена
-    orders = []
-  }
+export default function AdminDashboard({ products, orders }: AdminDashboardProps) {
+  const [activeTab, setActiveTab] = useState<'products' | 'orders'>('products')
 
   return (
     <div className="min-h-screen bg-ivory text-bark pb-16" suppressHydrationWarning>
@@ -51,41 +27,39 @@ export default async function AdminPage({
               Панель управління
             </h1>
           </div>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/"
-              className="font-body text-xs bg-parchment/10 hover:bg-parchment/20 text-wheat px-3 py-1.5 rounded-sm transition-colors"
-            >
-              ← На головну
-            </Link>
-          </div>
+          <Link
+            href="/"
+            className="font-body text-xs bg-parchment/15 hover:bg-parchment/25 text-wheat px-3 py-1.5 rounded-sm transition-colors"
+          >
+            ← На головну
+          </Link>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Статистика та перемикач вкладок */}
+        {/* Перемикач вкладок та кнопка додавання */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-2 bg-parchment/60 p-1 rounded-sm border border-mist w-fit">
-            <Link
-              href="/admin?tab=products"
-              className={`px-5 py-2 font-display text-xs font-bold rounded-sm transition-all ${
+            <button
+              onClick={() => setActiveTab('products')}
+              className={`px-5 py-2 font-display text-xs font-bold rounded-sm transition-all cursor-pointer ${
                 activeTab === 'products'
                   ? 'bg-caramel text-cream shadow-sm'
                   : 'text-bark hover:text-caramel'
               }`}
             >
               Товари ({products.length})
-            </Link>
-            <Link
-              href="/admin?tab=orders"
-              className={`px-5 py-2 font-display text-xs font-bold rounded-sm transition-all ${
+            </button>
+            <button
+              onClick={() => setActiveTab('orders')}
+              className={`px-5 py-2 font-display text-xs font-bold rounded-sm transition-all cursor-pointer ${
                 activeTab === 'orders'
                   ? 'bg-caramel text-cream shadow-sm'
                   : 'text-bark hover:text-caramel'
               }`}
             >
               Оплачені замовлення ({orders.length})
-            </Link>
+            </button>
           </div>
 
           {activeTab === 'products' && (
@@ -98,7 +72,7 @@ export default async function AdminPage({
           )}
         </div>
 
-        {/* Вкладка товарів */}
+        {/* Вкладка: Товари */}
         {activeTab === 'products' && (
           <div className="bg-ivory border border-parchment rounded-sm shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
@@ -167,7 +141,7 @@ export default async function AdminPage({
                   {products.length === 0 && (
                     <tr>
                       <td colSpan={5} className="p-12 text-center text-oak font-body">
-                        Список товарів порожній. Натисніть «Додати новий товар», щоб створити першу позицію.
+                        Список товарів порожній.
                       </td>
                     </tr>
                   )}
@@ -177,7 +151,7 @@ export default async function AdminPage({
           </div>
         )}
 
-        {/* Вкладка замовлень */}
+        {/* Вкладка: Оплачені замовлення */}
         {activeTab === 'orders' && (
           <div className="bg-ivory border border-parchment rounded-sm shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
@@ -202,14 +176,14 @@ export default async function AdminPage({
                       </td>
                       <td className="p-4">
                         <div className="font-display font-semibold text-bark">
-                          {order.user?.name || order.customerName || 'Гість / Анонім'}
+                          {order.user?.name || order.customerName || 'Гість'}
                         </div>
                         <div className="text-xs text-oak">
                           {order.user?.email || order.email || 'Email не вказано'}
                         </div>
                       </td>
                       <td className="p-4 text-xs text-bark">
-                        <div>{order.address || order.shippingAddress || 'Самовивіз / Не вказано'}</div>
+                        <div>{order.address || order.shippingAddress || 'Не вказано'}</div>
                         <div className="text-oak">{order.phone || ''}</div>
                       </td>
                       <td className="p-4 font-bold text-amber whitespace-nowrap">
@@ -225,7 +199,7 @@ export default async function AdminPage({
                   {orders.length === 0 && (
                     <tr>
                       <td colSpan={5} className="p-12 text-center text-oak font-body">
-                        Ще немає оплачених замовлень у системі.
+                        Ще немає оплачених замовлень або таблиця замовлень не створена в базі даних.
                       </td>
                     </tr>
                   )}

@@ -15,19 +15,19 @@ const BANNER_IMGS = [
 
 const slides = [
   {
-    title: "Summer Artisan Sale",
-    sub: "Up to 40% off selected ceramics & homewares",
-    cta: "Shop Now",
+    title: "Літній розпродаж виробів",
+    sub: "Знижки до 40% на вибрану кераміку та товари для дому",
+    cta: "Купити зараз",
   },
   {
-    title: "New Season Textiles",
-    sub: "Woven throws, linen runners & natural totes",
-    cta: "Browse Textiles",
+    title: "Текстиль нового сезону",
+    sub: "Ткані пледи, лляні доріжки та натуральні сумки",
+    cta: "Переглянути текстиль",
   },
   {
-    title: "Café & Kitchen Edit",
-    sub: "Thornfield's curated collection for the home barista",
-    cta: "Explore Edit",
+    title: "Для кав'ярні та кухні",
+    sub: "Добірка від Thornfield для домашнього бариста",
+    cta: "Переглянути добірку",
   },
 ];
 
@@ -77,7 +77,7 @@ export const Banner: React.FC<Props> = ({ className }) => {
           >
             {slides[active].title}
           </h2>
-          <button className="self-start font-body bg-caramel hover:bg-amber text-cream px-5 py-2 text-sm transition-colors">
+          <button className="self-start font-body bg-caramel hover:bg-amber text-cream px-5 py-2 text-sm transition-colors cursor-pointer">
             {slides[active].cta} →
           </button>
         </div>
@@ -87,7 +87,7 @@ export const Banner: React.FC<Props> = ({ className }) => {
             <button
               key={i}
               onClick={() => setActive(i)}
-              className="rounded-full transition-all"
+              className="rounded-full transition-all cursor-pointer"
               style={{
                 width: i === active ? 18 : 6,
                 height: 6,
@@ -114,12 +114,12 @@ export const Banner: React.FC<Props> = ({ className }) => {
             style={{ background: "rgba(61,31,11,0.45)" }}
           />
           <p className="relative font-display text-wheat text-sm font-semibold leading-tight">
-            Vintage Shelf
+            Вінтажні
             <br />
-            Finds
+            знахідки
           </p>
-          <button className="relative font-body text-tan text-xs mt-1 hover:text-wheat transition-colors">
-            Shop →
+          <button className="relative font-body text-tan text-xs mt-1 hover:text-wheat transition-colors cursor-pointer text-left">
+            Переглянути →
           </button>
         </div>
         <div
@@ -136,12 +136,12 @@ export const Banner: React.FC<Props> = ({ className }) => {
             style={{ background: "rgba(61,31,11,0.4)" }}
           />
           <p className="relative font-display text-wheat text-sm font-semibold leading-tight">
-            Free UK
+            Безкоштовна
             <br />
-            Delivery
+            доставка
           </p>
-          <button className="relative font-body text-tan text-xs mt-1 hover:text-wheat transition-colors">
-            Over £40 →
+          <button className="relative font-body text-tan text-xs mt-1 hover:text-wheat transition-colors cursor-pointer text-left">
+            Від 40 £ →
           </button>
         </div>
       </div>
