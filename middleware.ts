@@ -1,4 +1,4 @@
-export { auth as middleware } from "@/app/api/auth/[...nextauth]/route";
+export { auth as proxy } from "@/auth";
 
 export const config = {
   matcher: ["/checkout/:path*", "/profile/:path*"],
