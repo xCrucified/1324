@@ -11,21 +11,16 @@ import Banner from "./ui/banner";
 import { cn } from "@/lib/utils";
 import { useShopStore } from "@/store/use-shop";
 import ActionToast from "./ui/action-toast";
+import { Product as PrismaProduct } from "@prisma/client";
 
 interface Props {
   className?: string;
-  selectedCategory?: string; // Добавили категорию в пропсы
-  products: {
-    id: string;
-    title: string;
-    price: number;
-    description: string | null;
-    image: string | null;
-    images: string[];
-  }[];
+  selectedCategory?: string;
+  products: PrismaProduct[];
 }
 
-type Product = {
+// Локальный тип для отображения карточки товара
+type UIProduct = {
   id: string;
   name: string;
   price: number;
@@ -57,7 +52,7 @@ export const Main: React.FC<Props> = ({ className, products = [], selectedCatego
   }, []);
 
   const handleAdd = useCallback(
-    (product: Product) => {
+    (product: UIProduct) => {
       addToCart({
         id: product.id,
         name: product.name,
@@ -95,11 +90,12 @@ export const Main: React.FC<Props> = ({ className, products = [], selectedCatego
     [savedItems, toggleSave]
   );
 
-  const catalog: Product[] = useMemo(
+  // Маппим Prisma-продукты в формат, который ожидает интерфейс UI
+  const catalog: UIProduct[] = useMemo(
     () =>
       products.map((p) => ({
         id: p.id,
-        name: p.title,
+        name: p.title, // В схеме Prisma поле называется title
         price: p.price,
         originalPrice: undefined,
         sold: 0,
@@ -146,7 +142,6 @@ export const Main: React.FC<Props> = ({ className, products = [], selectedCatego
   return (
     <div className={cn(className, "bg-cream min-h-screen")}>
       <main>
-        {/* Баннеры и FlashSale показываются ТОЛЬКО на главной (Home) и при отсутствии поиска */}
         {selectedCategory === 'Home' && !query.trim() && (
           <>
             <Banner />
@@ -156,7 +151,6 @@ export const Main: React.FC<Props> = ({ className, products = [], selectedCatego
           </>
         )}
 
-        {/* Если выбран поисковый запрос ИЛИ открыта любая другая категория */}
         {query.trim() || selectedCategory !== 'Home' ? (
           <section className="max-w-7xl mx-auto px-3 py-6">
             <div className="bg-ivory border border-parchment rounded-sm p-4 mb-4 flex items-center justify-between">
@@ -199,7 +193,6 @@ export const Main: React.FC<Props> = ({ className, products = [], selectedCatego
             )}
           </section>
         ) : (
-          /* Стандартные секции для главной страницы (Home) */
           <>
             <ProductSection
               title="🔥 Hot Items"
