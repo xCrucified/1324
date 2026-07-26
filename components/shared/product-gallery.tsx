@@ -44,7 +44,7 @@ export default function ProductGallery({ images, title }: ProductGalleryProps) {
         {/* Головне зображення на сторінці */}
         <div
           onClick={() => setIsOpenModal(true)}
-          className="relative w-full h-[380px] md:h-[450px] bg-parchment rounded-sm overflow-hidden border border-mist group flex items-center justify-center cursor-zoom-in"
+          className="relative w-full h-95 md:h-112.5 bg-parchment rounded-sm overflow-hidden border border-mist group flex items-center justify-center cursor-zoom-in"
           title="Натисніть, щоб збільшити"
         >
           <img
