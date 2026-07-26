@@ -38,7 +38,7 @@ export default async function Page({ searchParams }: Props) {
     <>
       <TopBar />
       <Header />
-      <Main products={products} selectedCategory={selectedCategory} />
+      <Main products={products} selectedCategory={selectedCategory} />{" "}
       <Footer />
     </>
   );
