@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use server'
 
 import { prisma } from '@/lib/prisma'
@@ -180,7 +181,6 @@ export async function parseAndSaveProduct(rawInputUrl: string) {
       throw new Error('API Key missing in environment variables (RAPIDAPI_KEY).')
     }
 
-    // Обновлен путь на /1688/detail в соответствии с документацией API
     const targetUrl = `https://${apiHost}/1688/detail?itemId=${itemId}`
     console.log(`🔍 Запрос к API: ${targetUrl}`)
 

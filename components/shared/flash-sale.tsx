@@ -54,12 +54,12 @@ export const FlashSale: React.FC<Props> = ({
               className="font-display text-bark font-bold"
               style={{ fontSize: '1.1rem' }}
             >
-              ⚡ Flash Sale
+              ⚡ Швидкий розпродаж
             </span>
 
             <div className="flex items-center gap-1">
               <span className="font-body text-xs text-oak">
-                Ends in
+                Закінчується через
               </span>
 
               {[h, m, s].map((unit, i) => (
@@ -85,7 +85,7 @@ export const FlashSale: React.FC<Props> = ({
           </div>
 
           <button className="font-body text-caramel text-xs hover:text-amber transition-colors">
-            View all →
+            Переглянути всі →
           </button>
         </div>
 
@@ -117,14 +117,14 @@ export const FlashSale: React.FC<Props> = ({
                   className="font-display text-amber font-bold"
                   style={{ fontSize: '1.05rem' }}
                 >
-                  €{product.price.toFixed(2)}
+                  {product.price.toFixed(2)} ₴
                 </span>
               </div>
 
               <button
                 type="button"
                 onClick={(e) => {
-                  e.preventDefault(); // Останавливаем переход по ссылке Link
+                  e.preventDefault();
                   e.stopPropagation();
                   onAdd({
                     id: product.id,
@@ -140,7 +140,7 @@ export const FlashSale: React.FC<Props> = ({
                 }}
                 className="w-full font-body text-xs py-1.5 bg-parchment hover:bg-caramel hover:text-cream text-oak border border-oak transition-colors rounded-sm"
               >
-                Add to Cart
+                У кошик
               </button>
             </Link>
           ))}

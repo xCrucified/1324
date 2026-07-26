@@ -6,50 +6,50 @@ interface Props {
   className?: string;
 }
 
-// Функция для перевода текста ссылки в безопасный URL (slug)
+// Функція для перетворення тексту посилання на безпечний URL (slug)
 const slugify = (text: string) => {
   return text.toLowerCase().replace(/ & /g, '-').replace(/\s+/g, '-');
 };
 
 const cols = [
     {
-      title: "Pentu24 Market",
+      title: "Маркет Pentu24",
       links: [
-        "About Us",
-        "Careers",
-        "Press",
-        "Sustainability",
-        "Maker Programme",
+        "Про нас",
+        "Вакансії",
+        "Преса",
+        "Сталий розвиток",
+        "Програма для майстрів",
       ],
     },
     {
-      title: "Help & Support",
+      title: "Допомога та підтримка",
       links: [
-        "Track Your Order",
-        "Returns Policy",
-        "Payment Methods",
-        "FAQ",
-        "Contact Us",
+        "Відстежити замовлення",
+        "Політика повернення",
+        "Способи оплати",
+        "Часті запитання",
+        "Зв'язатися з нами",
       ],
     },
     {
-      title: "Seller Hub",
+      title: "Центр продавця",
       links: [
-        "Open a Shop",
-        "Seller Fees",
-        "Seller Protection",
-        "Community Forum",
-        "Advertising",
+        "Відкрити магазин",
+        "Комісії продавця",
+        "Захист продавців",
+        "Форум спільноти",
+        "Реклама",
       ],
     },
     {
-      title: "Discover",
+      title: "Відкривайте",
       links: [
-        "Gift Ideas",
-        "Seasonal Edits",
-        "New Arrivals",
-        "Flash Deals",
-        "Top Shops",
+        "Ідеї для подарунків",
+        "Сезонні добірки",
+        "Нові надходження",
+        "Швидкі знижки",
+        "Найкращі магазини",
       ],
     },
   ];
@@ -104,20 +104,25 @@ export const Footer: React.FC<Props> = ({ className }) => {
               className="font-body text-oak opacity-60"
               style={{ fontSize: "0.7rem" }}
             >
-              © 2026 Pentu24 Market Ltd. All rights reserved.
+              © 2026 Pentu24 Market Ltd. Усі права захищені.
             </span>
           </div>
           <div className="flex gap-4">
-            {["Privacy", "Terms", "Cookies", "Sitemap"].map((l) => {
-              const href = `/info/${slugify(l)}`;
+            {[
+              { label: "Конфіденційність", name: "Privacy" },
+              { label: "Умови", name: "Terms" },
+              { label: "Файли cookie", name: "Cookies" },
+              { label: "Мапа сайту", name: "Sitemap" },
+            ].map(({ label, name }) => {
+              const href = `/info/${slugify(name)}`;
               return (
                 <Link
-                  key={l}
+                  key={label}
                   href={href}
                   className="font-body text-oak hover:text-wheat transition-colors opacity-60 hover:opacity-100"
                   style={{ fontSize: "0.7rem" }}
                 >
-                  {l}
+                  {label}
                 </Link>
               );
             })}

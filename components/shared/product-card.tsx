@@ -74,7 +74,7 @@ export const ProductCard: React.FC<Props> = ({ className, onAdd, onToggleSave, i
                 type="button"
                 onClick={handlePrevImage}
                 className="absolute left-1 top-1/2 -translate-y-1/2 bg-ivory/80 hover:bg-ivory text-bark rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs shadow-sm z-10"
-                title="Предыдущее фото"
+                title="Попереднє фото"
               >
                 ‹
               </button>
@@ -82,7 +82,7 @@ export const ProductCard: React.FC<Props> = ({ className, onAdd, onToggleSave, i
                 type="button"
                 onClick={handleNextImage}
                 className="absolute right-1 top-1/2 -translate-y-1/2 bg-ivory/80 hover:bg-ivory text-bark rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs shadow-sm z-10"
-                title="Следующее фото"
+                title="Наступне фото"
               >
                 ›
               </button>
@@ -108,7 +108,7 @@ export const ProductCard: React.FC<Props> = ({ className, onAdd, onToggleSave, i
                 className="font-body bg-sage text-cream px-1.5 py-px rounded-sm leading-none"
                 style={{ fontSize: "0.55rem", fontWeight: 700 }}
               >
-                FREE POST
+                БЕЗКОШТ. ДОСТАВКА
               </span>
             )}
           </div>
@@ -163,14 +163,14 @@ export const ProductCard: React.FC<Props> = ({ className, onAdd, onToggleSave, i
               className="font-display text-amber font-bold"
               style={{ fontSize: "1.05rem" }}
             >
-              €{product.price.toFixed(2)}
+              {product.price.toFixed(2)} ₴
             </span>
             {product.originalPrice && (
               <span
                 className="font-body text-oak line-through"
                 style={{ fontSize: "0.72rem" }}
               >
-                €{product.originalPrice.toFixed(2)}
+                {product.originalPrice.toFixed(2)} ₴
               </span>
             )}
           </div>
@@ -185,7 +185,7 @@ export const ProductCard: React.FC<Props> = ({ className, onAdd, onToggleSave, i
               className="font-body text-oak ml-auto"
               style={{ fontSize: "0.65rem" }}
             >
-              {product.sold.toLocaleString('en-US')} sold
+              продано {product.sold.toLocaleString('uk-UA')}
             </span>
           </div>
 
@@ -208,7 +208,7 @@ export const ProductCard: React.FC<Props> = ({ className, onAdd, onToggleSave, i
             className="w-full font-body text-xs py-1.5 bg-parchment hover:bg-caramel hover:text-cream text-oak border border-oak transition-colors rounded-sm"
             style={{ letterSpacing: "0.04em" }}
           >
-            + Add to Cart
+            + У кошик
           </button>
         </div>
       </article>
