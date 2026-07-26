@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       body.items.length > 0
     ) {
       priceAmount = body.items.reduce(
-        (sum: number, item: any) =>
+        (sum: number, item: { price?: number | string; quantity?: number | string }) =>
           sum +
           (Number(item.price) || 0) *
             (Number(item.quantity) || 1),
@@ -114,7 +114,7 @@ export async function POST(request: Request) {
         itemsCount:
           Array.isArray(body.items)
             ? body.items.reduce(
-                (acc:number,item:any)=>
+                (acc:number,item:{quantity?:number|string})=>
                   acc +
                   (Number(item.quantity)||1),
                 0
@@ -131,7 +131,7 @@ export async function POST(request: Request) {
             Array.isArray(body.items) &&
             body.items.length > 0
 
-            ? body.items.map((item:any)=>({
+            ? body.items.map((item:{productId: string, id: string, quantity: number, price: number, size: number, color: string})=>({
 
                 productId:
                   item.productId ||

@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+type MonobankTransaction = {
+  comment?: string;
+  description?: string;
+  amount: number;
+};
+
 export async function POST(request: Request) {
   try {
     const { orderId } = await request.json();
@@ -44,12 +50,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Rate limit or Bank API error' }, { status: monoRes.status });
     }
 
-    const transactions = await monoRes.json();
+    const transactions = await monoRes.json() as MonobankTransaction[];
 
     // Пошук за останніми 8 символами ID або повним ID
     const shortOrderId = order.id.length > 10 ? order.id.slice(-8) : order.id;
 
-    const paymentFound = transactions.find((tx: any) => {
+    const paymentFound = transactions.find((tx: MonobankTransaction) => {
       const hasComment = tx.comment && tx.comment.includes(shortOrderId);
       const hasDescription = tx.description && tx.description.includes(shortOrderId);
       return hasComment || hasDescription;
