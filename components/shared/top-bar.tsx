@@ -23,12 +23,15 @@ export const TopBar: React.FC<Props> = ({ className }) => {
       .catch(() => setOrdersCount(0));
   }, [ordersOpen]);
 
+  // Додали "Мої адреси" для авторизованих
   const navItems = status === "authenticated" 
-    ? ["Відстежити замовлення", "Допомога", "Вийти"] 
+    ? ["Мої адреси", "Відстежити замовлення", "Допомога", "Вийти"] 
     : ["Відстежити замовлення", "Допомога", "Увійти", "Зареєструватися"];
 
   const handleTopBarClick = (item: string) => {
-    if (item === "Відстежити замовлення") {
+    if (item === "Мої адреси") {
+      router.push("/addresses");
+    } else if (item === "Відстежити замовлення") {
       setOrdersOpen(true);
     } else if (item === "Увійти") {
       router.push("/login");

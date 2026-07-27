@@ -6,19 +6,22 @@ import React, { useState, useEffect } from 'react';
 import { useShopStore } from '@/store/use-shop';
 import { initializePaddle, Paddle } from '@paddle/paddle-js';
 import Link from 'next/link';
+import RecipientForm, { RecipientData } from '@/components/shared/recipient-form';
 
 export default function CheckoutPage() {
   const { items, clearCart } = useShopStore();
   const [paddle, setPaddle] = useState<Paddle>();
   const [loading, setLoading] = useState(false);
 
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  // Контактні дані (не залежать від адреси доставки)
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [city, setCity] = useState('');
-  const [warehouse, setWarehouse] = useState('');
   const [telegram, setTelegram] = useState('');
+
+  // Стейт для адрес Нової Пошти
+  const [savedAddresses, setSavedAddresses] = useState<RecipientData[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<RecipientData | null>(null);
 
   useEffect(() => {
     initializePaddle({ 
@@ -33,6 +36,24 @@ export default function CheckoutPage() {
 
   const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
+  // Обробка збереження адреси з RecipientForm
+  const handleSaveAddress = (data: RecipientData) => {
+    if (editingAddress && data.id) {
+      setSavedAddresses((prev) => prev.map((a) => (a.id === data.id ? data : a)));
+    } else {
+      const newAddress = { ...data, id: Date.now().toString() };
+      setSavedAddresses((prev) => [...prev, newAddress]);
+      setSelectedAddressId(newAddress.id); // Автоматично обираємо нову адресу
+    }
+    setShowForm(false);
+    setEditingAddress(null);
+  };
+
+  const handleEditAddress = (address: RecipientData) => {
+    setEditingAddress(address);
+    setShowForm(true);
+  };
+
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -46,6 +67,13 @@ export default function CheckoutPage() {
       return;
     }
 
+    const selectedAddress = savedAddresses.find((a) => a.id === selectedAddressId);
+
+    if (!selectedAddress) {
+      alert('Будь ласка, додайте та оберіть адресу доставки Новою Поштою.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -54,12 +82,12 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           priceAmount: totalAmount,
-          firstName,
-          lastName,
+          firstName: selectedAddress.firstName,
+          lastName: selectedAddress.lastName,
           email: email || 'client@pentu24.com',
-          phone,
-          city,
-          warehouse,
+          phone: selectedAddress.phone,
+          city: selectedAddress.city, 
+          warehouse: selectedAddress.warehouse,
           telegram,
           orderDescription: `Замовлення з ${items.length} товарів на Pentu24`,
           items: items.map((item) => ({
@@ -129,36 +157,80 @@ export default function CheckoutPage() {
         <h1 className="font-display font-bold text-3xl text-bark mb-8">Checkout & Delivery</h1>
 
         <form onSubmit={handleCheckout} className="space-y-6">
+          
+          {/* Блок 1: Адреса доставки */}
           <div className="bg-ivory border border-parchment p-6 rounded-sm space-y-4">
             <h2 className="font-display font-bold text-lg text-bark border-b border-parchment pb-2">
-              Дані отримувача (Нова Пошта)
+              1. Дані отримувача (Нова Пошта)
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-display text-oak mb-1">Ім`я *</label>
-                <input
-                  type="text"
-                  required
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full bg-cream border border-mist rounded-sm p-2 text-sm focus:border-caramel outline-none"
-                  placeholder="Ім'я"
+            {showForm ? (
+              <div className="pt-2">
+                <RecipientForm 
+                  initialData={editingAddress}
+                  onSave={handleSaveAddress}
+                  onCancel={() => {
+                    setShowForm(false);
+                    setEditingAddress(null);
+                  }}
                 />
               </div>
-              <div>
-                <label className="block text-xs font-display text-oak mb-1">Прізвище *</label>
-                <input
-                  type="text"
-                  required
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="w-full bg-cream border border-mist rounded-sm p-2 text-sm focus:border-caramel outline-none"
-                  placeholder="Прізвище"
-                />
-              </div>
-            </div>
+            ) : (
+              <div className="space-y-4">
+                {savedAddresses.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-3">
+                    {savedAddresses.map((addr) => (
+                      <div 
+                        key={addr.id}
+                        onClick={() => setSelectedAddressId(addr.id || null)}
+                        className={`relative p-4 rounded-sm border cursor-pointer transition-all ${
+                          selectedAddressId === addr.id 
+                            ? 'border-bark bg-cream' 
+                            : 'border-mist bg-white hover:border-oak'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-bold text-bark">{addr.addressName}</h3>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditAddress(addr);
+                            }}
+                            className="text-xs text-oak hover:text-caramel"
+                          >
+                            Редагувати
+                          </button>
+                        </div>
+                        <p className="text-sm text-bark">{addr.firstName} {addr.lastName}</p>
+                        <p className="text-sm text-oak mb-2">{addr.phone}</p>
+                        <div className="text-xs text-bark bg-parchment/30 p-2 rounded-sm">
+                          <p className="font-semibold">м. {addr.city}</p>
+                          <p className="mt-1">{addr.warehouse}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-oak">У вас ще немає збережених адрес доставки.</p>
+                )}
 
+                <button
+                  type="button"
+                  onClick={() => setShowForm(true)}
+                  className="w-full py-2 border border-bark text-bark font-bold rounded-sm hover:bg-bark hover:text-cream transition-colors text-sm"
+                >
+                  + Додати нову адресу доставки
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Блок 2: Контактні дані для зв'язку/чеку */}
+          <div className="bg-ivory border border-parchment p-6 rounded-sm space-y-4">
+            <h2 className="font-display font-bold text-lg text-bark border-b border-parchment pb-2">
+              2. Контактні дані
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-display text-oak mb-1">Email *</label>
@@ -172,55 +244,19 @@ export default function CheckoutPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-display text-oak mb-1">Телефон *</label>
-                <input
-                  type="tel"
-                  required
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-cream border border-mist rounded-sm p-2 text-sm focus:border-caramel outline-none"
-                  placeholder="+380..."
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-display text-oak mb-1">Місто (Нова Пошта) *</label>
+                <label className="block text-xs font-display text-oak mb-1">Telegram (необов`язково)</label>
                 <input
                   type="text"
-                  required
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
+                  value={telegram}
+                  onChange={(e) => setTelegram(e.target.value)}
                   className="w-full bg-cream border border-mist rounded-sm p-2 text-sm focus:border-caramel outline-none"
-                  placeholder="Наприклад: Київ"
+                  placeholder="@username"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-display text-oak mb-1">Номер відділення НП *</label>
-                <input
-                  type="text"
-                  required
-                  value={warehouse}
-                  onChange={(e) => setWarehouse(e.target.value)}
-                  className="w-full bg-cream border border-mist rounded-sm p-2 text-sm focus:border-caramel outline-none"
-                  placeholder="Відділення №..."
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-display text-oak mb-1">Telegram (необов`язково)</label>
-              <input
-                type="text"
-                value={telegram}
-                onChange={(e) => setTelegram(e.target.value)}
-                className="w-full bg-cream border border-mist rounded-sm p-2 text-sm focus:border-caramel outline-none"
-                placeholder="@username"
-              />
             </div>
           </div>
 
+          {/* Блок 3: Замовлення та оплата */}
           <div className="bg-ivory border border-parchment p-6 rounded-sm space-y-6">
             <h2 className="font-display font-bold text-lg text-bark border-b border-parchment pb-2">
               Order Summary
@@ -252,8 +288,8 @@ export default function CheckoutPage() {
 
             <button
               type="submit"
-              disabled={loading || !paddle}
-              className="w-full py-3.5 bg-bark text-cream font-bold rounded-sm hover:bg-caramel transition-colors mt-4 disabled:opacity-50 cursor-pointer"
+              disabled={loading || !paddle || showForm}
+              className="w-full py-3.5 bg-bark text-cream font-bold rounded-sm hover:bg-caramel transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {loading ? 'Processing...' : 'Pay with Paddle'}
             </button>
