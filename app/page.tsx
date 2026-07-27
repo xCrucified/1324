@@ -9,9 +9,11 @@ interface PageProps {
 }
 
 export default async function Page({ searchParams }: PageProps) {
+  // 1. Отримуємо параметри пошуку/категорії з URL
   const resolvedParams = await searchParams;
   const selectedCategory = resolvedParams?.category || "Home";
 
+  // 2. Формуємо умову для вибірки з БД
   let whereClause = {};
   if (
     selectedCategory !== "Home" &&
@@ -26,6 +28,7 @@ export default async function Page({ searchParams }: PageProps) {
     };
   }
 
+  // 3. Завантажуємо товари з бази даних
   const products = await prisma.product.findMany({
     where: whereClause,
     include: {
@@ -40,6 +43,7 @@ export default async function Page({ searchParams }: PageProps) {
     <>
       <TopBar />
       <Header />
+      {/* 4. Передаємо пропси initialProducts та selectedCategory у компонент Main */}
       <Main initialProducts={products} selectedCategory={selectedCategory} />
       <Footer />
     </>
