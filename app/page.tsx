@@ -43,7 +43,6 @@ export default async function Page({ searchParams }: PageProps) {
     <>
       <TopBar />
       <Header />
-      {/* 4. Передаємо пропси initialProducts та selectedCategory у компонент Main */}
       <Main initialProducts={products} selectedCategory={selectedCategory} />
       <Footer />
     </>
