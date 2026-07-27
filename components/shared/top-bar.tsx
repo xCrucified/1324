@@ -56,7 +56,6 @@ export const TopBar: React.FC<Props> = ({ className }) => {
               )}
             </span>
             <span className="hidden sm:inline opacity-40">|</span>
-            <span className="hidden sm:inline">Безкоштовна доставка від 40 £</span>
           </div>
           
           <div className="flex gap-5 items-center font-body">

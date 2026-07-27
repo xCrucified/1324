@@ -16,15 +16,7 @@ interface Props {
 
 const CATEGORIES = [
   { label: "Кераміка", icon: "🏺", count: "2.4k товарів" },
-  { label: "Кава та чай", icon: "☕", count: "5.1k товарів" },
-  { label: "Текстиль", icon: "🧵", count: "3.8k товарів" },
-  { label: "Свічки", icon: "🕯️", count: "1.9k товарів" },
-  { label: "Вироби з деревини", icon: "🪵", count: "2.0k товарів" },
-  { label: "Рослини та ботаніка", icon: "🌿", count: "1.3k товарів" },
-  { label: "Канцелярія", icon: "📄", count: "0.8k товарів" },
-  { label: "Кухонний посуд", icon: "🥄", count: "4.2k товарів" },
-  { label: "Товари для дому", icon: "🏡", count: "6.5k товарів" },
-  { label: "Подарунки", icon: "🎁", count: "3.1k товарів" },
+
 ];
 
 export const Header: React.FC<Props> = ({ className }) => {
@@ -87,7 +79,7 @@ export const Header: React.FC<Props> = ({ className }) => {
             </select>
             <input
               className="flex-1 bg-ivory px-4 py-2.5 font-body text-bark text-sm outline-none placeholder-oak"
-              placeholder="Шукайте кераміку, каву, свічки, льон…"
+              placeholder="Шукайте товари, бренди або категорії…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onFocus={() => setSearchActive(true)}

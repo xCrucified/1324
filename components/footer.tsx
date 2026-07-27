@@ -6,60 +6,46 @@ interface Props {
   className?: string;
 }
 
-// Функція для перетворення тексту посилання на безпечний URL (slug)
-const slugify = (text: string) => {
-  return text.toLowerCase().replace(/ & /g, '-').replace(/\s+/g, '-');
-};
+// Данные для колонок футера, которые строго соответствуют ключам (slug) в infoPages
+const footerColumns = [
+  {
+    title: "Pentu24",
+    links: [
+      { label: "Про нас", slug: "about-us" },
+      { label: "Кар'єра", slug: "careers" },
+      { label: "Блог", slug: "press" },
+    ],
+  },
+  {
+    title: "Допомога & підтримка",
+    links: [
+      { label: "Трекінг", slug: "track-your-order" },
+      { label: "Політика повернення та відшкодування", slug: "returns-policy" },
+      { label: "Методи оплати", slug: "payment-methods" },
+      { label: "FAQ", slug: "faq" },
+      { label: "Contact Us", slug: "contact-us" },
+    ],
+  },
+  {
+    title: "Seller hub",
+    links: [
 
-const cols = [
-    {
-      title: "Маркет Pentu24",
-      links: [
-        "Про нас",
-        "Вакансії",
-        "Преса",
-        "Сталий розвиток",
-        "Програма для майстрів",
-      ],
-    },
-    {
-      title: "Допомога та підтримка",
-      links: [
-        "Відстежити замовлення",
-        "Політика повернення",
-        "Способи оплати",
-        "Часті запитання",
-        "Зв'язатися з нами",
-      ],
-    },
-    {
-      title: "Центр продавця",
-      links: [
-        "Відкрити магазин",
-        "Комісії продавця",
-        "Захист продавців",
-        "Форум спільноти",
-        "Реклама",
-      ],
-    },
-    {
-      title: "Відкривайте",
-      links: [
-        "Ідеї для подарунків",
-        "Сезонні добірки",
-        "Нові надходження",
-        "Швидкі знижки",
-        "Найкращі магазини",
-      ],
-    },
-  ];
+    ],
+  },
+  {
+    title: "Discover",
+    links: [
+
+    ],
+  },
+];
 
 export const Footer: React.FC<Props> = ({ className }) => {
   return (
     <footer className={cn(className, "bg-bark text-parchment mt-2")}>
       {/* Main footer */}
       <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
-        {cols.map((col) => (
+        {footerColumns.map((col) => (
           <div key={col.title}>
             <h3
               className="font-body text-wheat uppercase tracking-widest mb-4"
@@ -68,20 +54,17 @@ export const Footer: React.FC<Props> = ({ className }) => {
               {col.title}
             </h3>
             <ul className="space-y-2 list-none p-0 m-0">
-              {col.links.map((l) => {
-                const href = `/info/${slugify(l)}`;
-                return (
-                  <li key={l}>
-                    <Link
-                      href={href}
-                      className="font-body text-parchment opacity-70 hover:opacity-100 hover:text-wheat transition-colors"
-                      style={{ fontSize: "0.82rem" }}
-                    >
-                      {l}
-                    </Link>
-                  </li>
-                );
-              })}
+              {col.links.map((link) => (
+                <li key={link.slug}>
+                  <Link
+                    href={`/info/${link.slug}`}
+                    className="font-body text-parchment opacity-70 hover:opacity-100 hover:text-wheat transition-colors"
+                    style={{ fontSize: "0.82rem" }}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         ))}
@@ -109,23 +92,20 @@ export const Footer: React.FC<Props> = ({ className }) => {
           </div>
           <div className="flex gap-4">
             {[
-              { label: "Конфіденційність", name: "Privacy" },
-              { label: "Умови", name: "Terms" },
-              { label: "Файли cookie", name: "Cookies" },
-              { label: "Мапа сайту", name: "Sitemap" },
-            ].map(({ label, name }) => {
-              const href = `/info/${slugify(name)}`;
-              return (
-                <Link
-                  key={label}
-                  href={href}
-                  className="font-body text-oak hover:text-wheat transition-colors opacity-60 hover:opacity-100"
-                  style={{ fontSize: "0.7rem" }}
-                >
-                  {label}
-                </Link>
-              );
-            })}
+              { label: "Конфіденційність", slug: "privacy" },
+              { label: "Умови", slug: "terms" },
+              { label: "Файли cookie", slug: "cookies" },
+              { label: "Мапа сайту", slug: "sitemap" },
+            ].map(({ label, slug }) => (
+              <Link
+                key={slug}
+                href={`/info/${slug}`}
+                className="font-body text-oak hover:text-wheat transition-colors opacity-60 hover:opacity-100"
+                style={{ fontSize: "0.7rem" }}
+              >
+                {label}
+              </Link>
+            ))}
           </div>
         </div>
       </div>
@@ -133,4 +113,5 @@ export const Footer: React.FC<Props> = ({ className }) => {
   );
 };
 
-export default Footer;
+export
+ default Footer;

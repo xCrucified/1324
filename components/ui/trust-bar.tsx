@@ -6,12 +6,32 @@ interface Props {
 }
 
 const items = [
-    { icon: "🚚", title: "Free Delivery", sub: "On orders over £40" },
-    { icon: "↩️", title: "Easy Returns", sub: "30-day return window" },
-    { icon: "🔒", title: "Secure Payment", sub: "Encrypted checkout" },
-    { icon: "🌿", title: "Eco Packaging", sub: "Plastic-free dispatch" },
-    { icon: "⭐", title: "Verified Makers", sub: "Every shop vetted" },
-  ];
+  {
+    icon: "🌍",
+    title: "Доставка по всій Україні",
+    sub: "Товари від міжнародних продавців",
+  },
+  {
+    icon: "💳",
+    title: "Безпечна оплата",
+    sub: "Захищені платіжні сервіси",
+  },
+  {
+    icon: "📦",
+    title: "Відстеження замовлення",
+    sub: "Статус доставки в будь-який момент",
+  },
+  {
+    icon: "🛡️",
+    title: "Захист покупців",
+    sub: "Допомога при спірних ситуаціях",
+  },
+  {
+    icon: "🎁",
+    title: "Широкий вибір товарів",
+    sub: "Тисячі пропозицій за вигідними цінами",
+  },
+];
 
 export const TrustBar: React.FC<Props> = ({ className }) => {
   return (
