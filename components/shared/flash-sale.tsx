@@ -1,22 +1,46 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
+
+export interface FlashProductItem {
+  id: string;
+  title: string;
+  price: number;
+  image: string | null;
+}
+
+export interface AddToCartPayload {
+  id: string;
+  name: string;
+  price: number;
+  originalPrice: number;
+  img: string;
+  shop: string;
+  sold: number;
+  rating: number;
+  reviews: number;
+}
 
 interface Props {
   className?: string;
-  onAdd: (product: any) => void;
-  products: {
-    id: string;
-    title: string;
-    price: number;
-    image: string | null;
-  }[];
+  onAdd: (product: AddToCartPayload) => void;
+  products: FlashProductItem[];
+}
+
+// Стандартний React-хук для безпечної перевірки монтування на клієнті без каскадних рендерів
+const emptySubscribe = () => () => {};
+function useIsMounted() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,  // Значення на клієнті
+    () => false  // Значення на сервері (SSR)
+  );
 }
 
 function useCountdown(targetSeconds: number) {
   const [secs, setSecs] = useState(targetSeconds);
+  const isMounted = useIsMounted();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -30,7 +54,7 @@ function useCountdown(targetSeconds: number) {
   const m = String(Math.floor((secs % 3600) / 60)).padStart(2, '0');
   const s = String(secs % 60).padStart(2, '0');
 
-  return { h, m, s };
+  return { h, m, s, isMounted };
 }
 
 export const FlashSale: React.FC<Props> = ({
@@ -38,7 +62,7 @@ export const FlashSale: React.FC<Props> = ({
   onAdd,
   products,
 }) => {
-  const { h, m, s } = useCountdown(4 * 3600 + 22 * 60 + 18);
+  const { h, m, s, isMounted } = useCountdown(4 * 3600 + 22 * 60 + 18);
 
   const flashProducts = products.slice(0, 4);
 
@@ -62,7 +86,7 @@ export const FlashSale: React.FC<Props> = ({
                 Закінчується через
               </span>
 
-              {[h, m, s].map((unit, i) => (
+              {(isMounted ? [h, m, s] : ['00', '00', '00']).map((unit, i) => (
                 <span key={i} className="flex items-center gap-1">
                   <span
                     className="font-body text-cream bg-bark rounded px-1.5 py-0.5 tabular-nums"

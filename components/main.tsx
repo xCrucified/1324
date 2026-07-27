@@ -1,6 +1,12 @@
-'use client';
+"use client";
 
-import React, { useRef, useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import CartToast from "./ui/cart-toast";
 import ProductSection from "./shared/product-section";
 import { ProductCard } from "./shared/product-card";
@@ -8,20 +14,20 @@ import TrustBar from "./ui/trust-bar";
 import CategoryGrid from "./shared/category-grid";
 import FlashSale from "./shared/flash-sale";
 import Banner from "./ui/banner";
+import ActionToast from "./ui/action-toast";
 import { cn } from "@/lib/utils";
 import { useShopStore } from "@/store/use-shop";
-import ActionToast from "./ui/action-toast";
-import { Product as PrismaProduct } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
-interface Props {
-  className?: string;
-  selectedCategory?: string;
-  products: PrismaProduct[];
-}
+// Автоматичне виведення точного типу продукту з Prisma
+export type PrismaProductWithCategory = Prisma.ProductGetPayload<{
+  include: { category: true };
+}>;
 
-type UIProduct = {
+export type UIProduct = {
   id: string;
   name: string;
+  title: string;
   price: number;
   originalPrice?: number;
   sold: number;
@@ -29,23 +35,27 @@ type UIProduct = {
   reviews: number;
   shop: string;
   img: string;
+  image: string | null;
   badge?: string;
   freeShip?: boolean;
 };
 
-type PrismaProductWithFallbackFields = PrismaProduct & {
-  title?: string;
-  image?: string;
-  name?: string;
-};
+interface Props {
+  className?: string;
+  selectedCategory?: string;
+  initialProducts: PrismaProductWithCategory[];
+}
 
-export const Main: React.FC<Props> = ({ className, products = [], selectedCategory = 'Home' }) => {
+export const Main: React.FC<Props> = ({
+  className,
+  selectedCategory = "Home",
+  initialProducts,
+}) => {
   const [toastVisible, setToastVisible] = useState(false);
   const [savedToast, setSavedToast] = useState(false);
-  const [savedMessage, setSavedMessage] = useState('');
-  
-  const { query, addToCart, savedItems, toggleSave } = useShopStore();
+  const [savedMessage, setSavedMessage] = useState("");
 
+  const { query, addToCart, savedItems, toggleSave } = useShopStore();
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -56,8 +66,46 @@ export const Main: React.FC<Props> = ({ className, products = [], selectedCatego
     };
   }, []);
 
+  const catalog: UIProduct[] = useMemo(() => {
+    return initialProducts.map((p) => {
+      // Перевіряємо поля title / name безпечним способом
+      const displayTitle =
+        ("title" in p && typeof p.title === "string" && p.title) ||
+        ("name" in p && typeof p.name === "string" && p.name) ||
+        "Товар";
+
+      const displayImage = p.image || "/placeholder.png";
+
+      return {
+        id: p.id,
+        name: displayTitle,
+        title: displayTitle,
+        price: p.price,
+        originalPrice: undefined,
+        sold: 0,
+        rating: 5,
+        reviews: 0,
+        shop: "Pentu",
+        img: displayImage,
+        image: p.image,
+        badge: undefined,
+        freeShip: true,
+      };
+    });
+  }, [initialProducts]);
+
   const handleAdd = useCallback(
-    (product: UIProduct) => {
+    (product: {
+      id: string;
+      name: string;
+      price: number;
+      originalPrice?: number;
+      img: string;
+      shop: string;
+      sold: number;
+      rating: number;
+      reviews: number;
+    }) => {
       addToCart({
         id: product.id,
         name: product.name,
@@ -84,37 +132,25 @@ export const Main: React.FC<Props> = ({ className, products = [], selectedCatego
   );
 
   const handleToggleSave = useCallback(
-    (product: { id: string; name: string; price: number; img: string; shop: string }) => {
-      const isCurrentlySaved = savedItems.some((item) => item.id === product.id);
+    (product: {
+      id: string;
+      name: string;
+      price: number;
+      img: string;
+      shop: string;
+    }) => {
+      const isCurrentlySaved = savedItems.some(
+        (item) => item.id === product.id
+      );
       toggleSave(product);
-      
-      setSavedMessage(isCurrentlySaved ? 'Removed from saved items' : 'Added to saved items');
+
+      setSavedMessage(
+        isCurrentlySaved ? "Видалено зі збереженого" : "Додано до збереженого"
+      );
       setSavedToast(true);
       setTimeout(() => setSavedToast(false), 2000);
     },
     [savedItems, toggleSave]
-  );
-
-  const catalog: (UIProduct & { title: string; image: string | null })[] = useMemo(() =>
-    products.map((p) => {
-      const product = p as PrismaProductWithFallbackFields;
-      return {
-        id: p.id,
-        name: product.title || product.name || '',
-        title: product.title || product.name || '',
-        price: p.price,
-        originalPrice: undefined,
-        sold: 0,
-        rating: 5,
-        reviews: 0,
-        shop: 'Pentu',
-        img: product.image || '/placeholder.png',
-        image: product.image || null,
-        badge: undefined,
-        freeShip: true,
-      };
-    }),
-    [products]
   );
 
   const { filtered, hotItems, newArrivals, recommended } = useMemo(() => {
@@ -140,8 +176,8 @@ export const Main: React.FC<Props> = ({ className, products = [], selectedCatego
     return (
       <div className={cn(className, "bg-cream min-h-screen")}>
         <main className="max-w-7xl mx-auto py-20 text-center">
-          <h2 className="text-3xl font-bold text-bark">No products yet</h2>
-          <p className="text-oak mt-3">Add products from the admin panel.</p>
+          <h2 className="text-3xl font-bold text-bark">Товарів поки немає</h2>
+          <p className="text-oak mt-3">Додайте товари через адмін-панель.</p>
         </main>
       </div>
     );
@@ -150,7 +186,7 @@ export const Main: React.FC<Props> = ({ className, products = [], selectedCatego
   return (
     <div className={cn(className, "bg-cream min-h-screen")}>
       <main>
-        {selectedCategory === 'Home' && !query.trim() && (
+        {selectedCategory === "Home" && !query.trim() && (
           <>
             <Banner />
             <FlashSale products={catalog} onAdd={handleAdd} />
@@ -159,21 +195,27 @@ export const Main: React.FC<Props> = ({ className, products = [], selectedCatego
           </>
         )}
 
-        {query.trim() || selectedCategory !== 'Home' ? (
+        {query.trim() || selectedCategory !== "Home" ? (
           <section className="max-w-7xl mx-auto px-3 py-6">
             <div className="bg-ivory border border-parchment rounded-sm p-4 mb-4 flex items-center justify-between">
               <h1 className="font-display font-bold text-xl text-bark">
-                {query.trim() ? `Search results for "${query}"` : selectedCategory}
+                {query.trim()
+                  ? `Результати пошуку для "${query}"`
+                  : selectedCategory}
               </h1>
               <span className="font-body text-oak text-xs">
-                {filtered.length} {filtered.length === 1 ? 'item' : 'items'} found
+                Знайдено: {filtered.length}
               </span>
             </div>
 
             {filtered.length === 0 ? (
               <div className="text-center py-20 bg-ivory border border-parchment rounded-sm">
-                <p className="font-display font-bold text-bark text-lg">No products found</p>
-                <p className="font-body text-oak text-xs mt-1">Try selecting a different category or search term.</p>
+                <p className="font-display font-bold text-bark text-lg">
+                  Товарів не знайдено
+                </p>
+                <p className="font-body text-oak text-xs mt-1">
+                  Спробуйте вибрати іншу категорію або змінити запит.
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -203,19 +245,21 @@ export const Main: React.FC<Props> = ({ className, products = [], selectedCatego
         ) : (
           <>
             <ProductSection
-              title="🔥 Hot Items"
-              products={hotItems.length ? hotItems.slice(0, 6) : catalog.slice(0, 6)}
+              title="🔥 Популярне"
+              products={
+                hotItems.length ? hotItems.slice(0, 6) : catalog.slice(0, 6)
+              }
               onAdd={handleAdd}
             />
 
             <ProductSection
-              title="✨ New Arrivals"
+              title="✨ Новинки"
               products={newArrivals.slice(0, 6)}
               onAdd={handleAdd}
             />
 
             <ProductSection
-              title="Recommended for You"
+              title="Рекомендовано для вас"
               products={recommended.slice(0, 6)}
               onAdd={handleAdd}
             />

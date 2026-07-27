@@ -4,13 +4,13 @@ import Header from "@/components/header";
 import Main from "@/components/main";
 import TopBar from "@/components/shared/top-bar";
 
-interface Props {
+interface PageProps {
   searchParams: Promise<{ category?: string }>;
 }
 
-export default async function Page({ searchParams }: Props) {
-  const params = await searchParams;
-  const selectedCategory = params.category || "Home";
+export default async function Page({ searchParams }: PageProps) {
+  const resolvedParams = await searchParams;
+  const selectedCategory = resolvedParams?.category || "Home";
 
   let whereClause = {};
   if (
@@ -28,7 +28,9 @@ export default async function Page({ searchParams }: Props) {
 
   const products = await prisma.product.findMany({
     where: whereClause,
-    include: { category: true },
+    include: {
+      category: true,
+    },
     orderBy: {
       createdAt: "desc",
     },
@@ -38,7 +40,7 @@ export default async function Page({ searchParams }: Props) {
     <>
       <TopBar />
       <Header />
-      <Main products={products} />
+      <Main initialProducts={products} selectedCategory={selectedCategory} />
       <Footer />
     </>
   );
