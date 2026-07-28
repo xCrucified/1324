@@ -1,6 +1,7 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,16 +13,57 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Состояния для баннера-куки
+  const [isAgreed, setIsAgreed] = useState(false);
+  const [showBanner, setShowBanner] = useState(false);
+
+  // Проверяем localStorage при загрузке страницы
+  useEffect(() => {
+    const accepted = localStorage.getItem("pentu_terms_accepted");
+    const dismissed = localStorage.getItem("pentu_terms_dismissed");
+
+    if (accepted === "true") {
+      setIsAgreed(true);
+    } else if (dismissed !== "true") {
+      // Показываем, только если не приняли и не скрывали вручную
+      setShowBanner(true);
+    }
+  }, []); 
+
+  const handleAcceptBanner = () => {
+    localStorage.setItem("pentu_terms_accepted", "true");
+    setIsAgreed(true);
+    setShowBanner(false);
+    setError("");
+  };
+
+  const handleDismissBanner = () => {
+    localStorage.setItem("pentu_terms_dismissed", "true");
+    setShowBanner(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // Если попытались отправить форму без согласия
+    if (!isAgreed) {
+      setError("Пожалуйста, примите условия политики пользования");
+      setShowBanner(true);
+      return;
+    }
+
     setLoading(true);
 
     try {
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ 
+          email, 
+          password,
+          termsAccepted: isAgreed // Передаем согласие на сервер
+        }),
       });
 
       const data = await res.json();
@@ -52,7 +94,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 relative overflow-hidden">
       <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-md">
         <div className="text-center">
           <h2 className="text-2xl font-bold tracking-tight text-gray-900">
@@ -111,7 +153,14 @@ export default function RegisterPage() {
 
         <div>
           <button
-            onClick={() => signIn("google", { callbackUrl: "/" })}
+            onClick={() => {
+              if (!isAgreed) {
+                setError("Пожалуйста, примите условия политики пользования");
+                setShowBanner(true);
+                return;
+              }
+              signIn("google", { callbackUrl: "/" });
+            }}
             className="w-full flex items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition cursor-pointer"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -134,6 +183,39 @@ export default function RegisterPage() {
           </Link>
         </p>
       </div>
+
+      {/* Всплывающее окно / Cookie banner слева снизу */}
+      {showBanner && (
+        <div className="fixed bottom-6 left-6 z-50 w-80 rounded-xl bg-white p-5 shadow-2xl border border-gray-200 animate-in slide-in-from-bottom-5">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-sm font-semibold text-gray-900">
+              Соглашение пользователя
+            </h3>
+            <button 
+              onClick={handleDismissBanner}
+              className="text-gray-400 hover:text-gray-600 transition"
+              aria-label="Закрыть"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <p className="text-xs text-gray-600 mb-4">
+            Мы используем файлы cookie. Для регистрации и использования платформы необходимо ознакомиться и согласиться с нашей{" "}
+            <Link href="/info/terms" className="text-blue-600 hover:underline" target="_blank">
+              политикой пользования
+            </Link>.
+          </p>
+          
+          <button
+            onClick={handleAcceptBanner}
+            className="w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 transition"
+          >
+            Принять и продолжить
+          </button>
+        </div>
+      )}
     </div>
   );
 }
