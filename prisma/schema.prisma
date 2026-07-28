@@ -12,6 +12,7 @@ model User {
   name          String?
   email         String?      @unique
   password      String?    
+  termsAccepted Boolean      @default(false) // Добавленное поле для согласия
   emailVerified DateTime?
   image         String?
   accounts      Account[]

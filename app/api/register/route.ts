@@ -4,11 +4,18 @@ import bcrypt from "bcryptjs";
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json();
+    const { email, password, termsAccepted } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json(
         { error: "Fill all the gaps" },
+        { status: 400 }
+      );
+    }
+
+    if (!termsAccepted) {
+      return NextResponse.json(
+        { error: "Необходимо согласие с политикой пользования" },
         { status: 400 }
       );
     }
@@ -19,7 +26,7 @@ export async function POST(request: Request) {
 
     if (existingUser) {
       return NextResponse.json(
-        { error: "User with this e-mail is already exists!" },
+        { error: "Пользователь с таким email уже существует! Если вы использовали Google, попробуйте войти через него." },
         { status: 400 }
       );
     }
@@ -30,6 +37,7 @@ export async function POST(request: Request) {
       data: {
         email,
         password: hashedPassword,
+        termsAccepted: true, // Сохраняем подтверждение в базу
       },
     });
 
