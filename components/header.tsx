@@ -1,23 +1,20 @@
-'use client';
+"use client";
 
-import { cn } from '@/lib/utils';
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useShopStore } from '@/store/use-shop';
-import { getOrders } from '@/app/actions';
-import CartModal from './shared/cart-modal';
-import SavedModal from './shared/saved-modal';
-import OrdersModal from './shared/orders-modal';
+import { cn } from "@/lib/utils";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useShopStore } from "@/store/use-shop";
+import { getOrders } from "@/app/actions";
+import CartModal from "./shared/cart-modal";
+import SavedModal from "./shared/saved-modal";
+import OrdersModal from "./shared/orders-modal";
 
 interface Props {
   className?: string;
 }
 
-const CATEGORIES = [
-  { label: "Кераміка", icon: "🏺", count: "2.4k товарів" },
-
-];
+const CATEGORIES = [{ label: "Кераміка", icon: "🏺", count: "2.4k товарів" }];
 
 export const Header: React.FC<Props> = ({ className }) => {
   const [searchActive, setSearchActive] = useState(false);
@@ -25,12 +22,11 @@ export const Header: React.FC<Props> = ({ className }) => {
   const [savedOpen, setSavedOpen] = useState(false);
   const [ordersOpen, setOrdersOpen] = useState(false);
   const [ordersCount, setOrdersCount] = useState(0);
-  
+
   const router = useRouter();
   const searchParams = useSearchParams();
-  
-  // Визначаємо активну категорію з URL (якщо параметра немає, то це 'Головна')
-  const currentCategory = searchParams.get('category') || 'Головна';
+
+  const currentCategory = searchParams.get("category") || "Головна";
 
   const { items, savedItems, query, setQuery } = useShopStore();
   const cartCount = items.reduce((total, item) => total + item.quantity, 0);
@@ -43,8 +39,8 @@ export const Header: React.FC<Props> = ({ className }) => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (window.location.pathname !== '/') {
-      router.push('/');
+    if (window.location.pathname !== "/") {
+      router.push("/");
     }
   };
 
@@ -53,15 +49,22 @@ export const Header: React.FC<Props> = ({ className }) => {
       <header
         className={cn(className, "bg-wheat sticky top-0 z-40")}
         style={{
-          boxShadow: "0 1px 0 rgba(139,94,47,0.2), 0 2px 12px rgba(30,15,6,0.08)",
+          boxShadow:
+            "0 1px 0 rgba(139,94,47,0.2), 0 2px 12px rgba(30,15,6,0.08)",
         }}
       >
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
           <Link href="/" className="shrink-0 flex flex-col leading-none mr-2">
-            <span className="font-script text-caramel" style={{ fontSize: "1.5rem" }}>
+            <span
+              className="font-script text-caramel"
+              style={{ fontSize: "1.5rem" }}
+            >
               Pentu24
             </span>
-            <span className="font-body text-oak uppercase tracking-widest" style={{ fontSize: "0.7rem" }}>
+            <span
+              className="font-body text-oak uppercase tracking-widest"
+              style={{ fontSize: "0.7rem" }}
+            >
               Маркетплейс
             </span>
           </Link>
@@ -71,7 +74,10 @@ export const Header: React.FC<Props> = ({ className }) => {
             className={`flex flex-1 border transition-colors rounded-sm overflow-hidden ${searchActive ? "border-oak" : "border-mist"}`}
             style={{ maxWidth: 680 }}
           >
-            <select className="bg-parchment border-r border-oak text-bark font-body px-3 py-2.5 text-xs outline-none shrink-0 hidden sm:block" style={{ minWidth: 125 }}>
+            <select
+              className="bg-parchment border-r border-oak text-bark font-body px-3 py-2.5 text-xs outline-none shrink-0 hidden sm:block"
+              style={{ minWidth: 125 }}
+            >
               <option>Усі категорії</option>
               {CATEGORIES.map((c) => (
                 <option key={c.label}>{c.label}</option>
@@ -86,17 +92,32 @@ export const Header: React.FC<Props> = ({ className }) => {
               onBlur={() => setSearchActive(false)}
               style={{ minWidth: 0 }}
             />
-            <button type="submit" className="bg-caramel hover:bg-amber transition-colors px-5 shrink-0 flex items-center justify-center" title="Шукати">
+            <button
+              type="submit"
+              className="bg-caramel hover:bg-amber transition-colors px-5 shrink-0 flex items-center justify-center"
+              title="Шукати"
+            >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <circle cx="6.5" cy="6.5" r="5" stroke="#FAF5EC" strokeWidth="1.5" />
-                <path d="M10.5 10.5L14 14" stroke="#FAF5EC" strokeWidth="1.5" strokeLinecap="round" />
+                <circle
+                  cx="6.5"
+                  cy="6.5"
+                  r="5"
+                  stroke="#FAF5EC"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M10.5 10.5L14 14"
+                  stroke="#FAF5EC"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
               </svg>
             </button>
           </form>
 
           {/* Кнопки Saved, Orders, Cart */}
           <div className="flex items-center gap-4 ml-auto shrink-0">
-            <button 
+            <button
               onClick={() => setSavedOpen(true)}
               className="flex flex-col items-center gap-0.5 text-bark hover:text-caramel transition-colors relative"
             >
@@ -110,55 +131,125 @@ export const Header: React.FC<Props> = ({ className }) => {
                   />
                 </svg>
                 {savedItems.length > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-amber text-cream rounded-full font-body leading-none flex items-center justify-center text-[0.58rem]" style={{ width: 16, height: 16, fontWeight: 700 }}>
+                  <span
+                    className="absolute -top-1.5 -right-1.5 bg-amber text-cream rounded-full font-body leading-none flex items-center justify-center text-[0.58rem]"
+                    style={{ width: 16, height: 16, fontWeight: 700 }}
+                  >
                     {savedItems.length}
                   </span>
                 )}
               </div>
-              <span className="font-body" style={{ fontSize: "0.6rem" }}>Збережене</span>
+              <span className="font-body" style={{ fontSize: "0.6rem" }}>
+                Збережене
+              </span>
             </button>
 
-            <button 
+            <button
               onClick={() => setOrdersOpen(true)}
               className="flex flex-col items-center gap-0.5 text-bark hover:text-caramel transition-colors relative"
             >
               <div className="relative">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <rect x="3" y="5" width="14" height="12" rx="1" stroke="currentColor" strokeWidth="1.4" />
-                  <path d="M7 5V4a3 3 0 016 0v1" stroke="currentColor" strokeWidth="1.4" />
+                  <rect
+                    x="3"
+                    y="5"
+                    width="14"
+                    height="12"
+                    rx="1"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                  />
+                  <path
+                    d="M7 5V4a3 3 0 016 0v1"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                  />
                 </svg>
                 {ordersCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-amber text-cream rounded-full font-body leading-none flex items-center justify-center text-[0.58rem]" style={{ width: 16, height: 16, fontWeight: 700 }}>
+                  <span
+                    className="absolute -top-1.5 -right-1.5 bg-amber text-cream rounded-full font-body leading-none flex items-center justify-center text-[0.58rem]"
+                    style={{ width: 16, height: 16, fontWeight: 700 }}
+                  >
                     {ordersCount}
                   </span>
                 )}
               </div>
-              <span className="font-body" style={{ fontSize: "0.6rem" }}>Замовлення</span>
+              <span className="font-body" style={{ fontSize: "0.6rem" }}>
+                Замовлення
+              </span>
             </button>
 
-            <button 
-              onClick={() => setCartOpen(true)} 
+            <button
+              onClick={() => setCartOpen(true)}
               className="flex flex-col items-center gap-0.5 text-bark hover:text-caramel transition-colors relative"
             >
               <div className="relative">
                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                  <path d="M2 2h2l3 11h10l2-7H6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  <path
+                    d="M2 2h2l3 11h10l2-7H6"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                   <circle cx="9" cy="17.5" r="1.2" fill="currentColor" />
                   <circle cx="15" cy="17.5" r="1.2" fill="currentColor" />
                 </svg>
                 {cartCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-amber text-cream rounded-full font-body leading-none flex items-center justify-center text-[0.58rem]" style={{ width: 16, height: 16, fontWeight: 700 }}>
+                  <span
+                    className="absolute -top-1.5 -right-1.5 bg-amber text-cream rounded-full font-body leading-none flex items-center justify-center text-[0.58rem]"
+                    style={{ width: 16, height: 16, fontWeight: 700 }}
+                  >
                     {cartCount}
                   </span>
                 )}
               </div>
-              <span className="font-body" style={{ fontSize: "0.6rem" }}>Кошик</span>
+              <span className="font-body" style={{ fontSize: "0.6rem" }}>
+                Кошик
+              </span>
+            </button>
+
+            <button
+              onClick={() => router.push("/profile")}
+              className="flex flex-col items-center gap-0.5 text-bark hover:text-caramel transition-colors relative"
+            >
+              <div className="relative">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M20 21a8 8 0 10-16 0"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <circle
+                    cx="12"
+                    cy="8"
+                    r="4"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                  />
+                </svg>
+                {savedItems.length > 0 && (
+                  <span
+                    className="absolute -top-1.5 -right-1.5 bg-amber text-cream rounded-full font-body leading-none flex items-center justify-center text-[0.58rem]"
+                    style={{ width: 16, height: 16, fontWeight: 700 }}
+                  >
+                    {savedItems.length}
+                  </span>
+                )}
+              </div>
+              <span className="font-body" style={{ fontSize: "0.6rem" }}>
+                Профіль
+              </span>
             </button>
           </div>
         </div>
 
-        {/* Навігація з динамічним підсвічуванням та підкресленням активної вкладки */}
-        <div className="border-t border-parchment bg-ivory overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+        <div
+          className="border-t border-parchment bg-ivory overflow-x-auto"
+          style={{ scrollbarWidth: "none" }}
+        >
           <div className="max-w-7xl mx-auto px-4 flex gap-0">
             {[
               { label: "Головна", key: "Головна" },
@@ -168,8 +259,11 @@ export const Header: React.FC<Props> = ({ className }) => {
               { label: "Продавці", key: "Sellers" },
             ].map((itemObj) => {
               const itemLabel = itemObj.label;
-              const itemKey = 'key' in itemObj ? itemObj.key : itemObj.label;
-              const href = itemKey === "Головна" ? "/" : `/?category=${encodeURIComponent(itemKey)}`;
+              const itemKey = "key" in itemObj ? itemObj.key : itemObj.label;
+              const href =
+                itemKey === "Головна"
+                  ? "/"
+                  : `/?category=${encodeURIComponent(itemKey)}`;
               const isActive = currentCategory === itemKey;
 
               return (
@@ -180,8 +274,8 @@ export const Header: React.FC<Props> = ({ className }) => {
                     isActive
                       ? "border-amber text-amber font-bold"
                       : itemKey === "Flash Sale"
-                      ? "border-transparent text-amber font-bold hover:text-amber/80"
-                      : "border-transparent text-bark hover:text-oak hover:border-oak"
+                        ? "border-transparent text-amber font-bold hover:text-amber/80"
+                        : "border-transparent text-bark hover:text-oak hover:border-oak"
                   }`}
                   style={{ letterSpacing: "0.03em" }}
                 >
@@ -192,10 +286,16 @@ export const Header: React.FC<Props> = ({ className }) => {
           </div>
         </div>
       </header>
-      
+
       <CartModal isOpen={cartOpen} onClose={() => setCartOpen(false)} />
       <SavedModal isOpen={savedOpen} onClose={() => setSavedOpen(false)} />
-      <OrdersModal isOpen={ordersOpen} onClose={() => { setOrdersOpen(false); getOrders().then(d => setOrdersCount(d.length)); }} />
+      <OrdersModal
+        isOpen={ordersOpen}
+        onClose={() => {
+          setOrdersOpen(false);
+          getOrders().then((d) => setOrdersCount(d.length));
+        }}
+      />
     </>
   );
 };
