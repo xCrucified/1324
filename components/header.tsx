@@ -9,6 +9,7 @@ import { getOrders } from "@/app/actions";
 import CartModal from "./shared/cart-modal";
 import SavedModal from "./shared/saved-modal";
 import OrdersModal from "./shared/orders-modal";
+import ProfileModal from "./shared/profile-modal";
 
 interface Props {
   className?: string;
@@ -22,6 +23,7 @@ export const Header: React.FC<Props> = ({ className }) => {
   const [savedOpen, setSavedOpen] = useState(false);
   const [ordersOpen, setOrdersOpen] = useState(false);
   const [ordersCount, setOrdersCount] = useState(0);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -209,40 +211,40 @@ export const Header: React.FC<Props> = ({ className }) => {
               </span>
             </button>
 
-            <button
-              onClick={() => router.push("/profile")}
-              className="flex flex-col items-center gap-0.5 text-bark hover:text-caramel transition-colors relative"
-            >
-              <div className="relative">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M20 21a8 8 0 10-16 0"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <circle
-                    cx="12"
-                    cy="8"
-                    r="4"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                  />
-                </svg>
-                {savedItems.length > 0 && (
-                  <span
-                    className="absolute -top-1.5 -right-1.5 bg-amber text-cream rounded-full font-body leading-none flex items-center justify-center text-[0.58rem]"
-                    style={{ width: 16, height: 16, fontWeight: 700 }}
-                  >
-                    {savedItems.length}
-                  </span>
-                )}
-              </div>
-              <span className="font-body" style={{ fontSize: "0.6rem" }}>
-                Профіль
-              </span>
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setProfileOpen((prev) => !prev)}
+                className="flex flex-col items-center gap-0.5 text-bark hover:text-caramel transition-colors relative"
+              >
+                <div className="relative">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M20 21a8 8 0 10-16 0"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <circle
+                      cx="12"
+                      cy="8"
+                      r="4"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                    />
+                  </svg>
+                </div>
+                <span className="font-body" style={{ fontSize: "0.6rem" }}>
+                  Профіль
+                </span>
+              </button>
+
+              {/* Дропдаун випадає під кнопкою */}
+              <ProfileModal
+                isOpen={profileOpen}
+                onClose={() => setProfileOpen(false)}
+              />
+            </div>
           </div>
         </div>
 
@@ -295,6 +297,10 @@ export const Header: React.FC<Props> = ({ className }) => {
           setOrdersOpen(false);
           getOrders().then((d) => setOrdersCount(d.length));
         }}
+      />
+      <ProfileModal
+        isOpen={profileOpen}
+        onClose={() => setProfileOpen(false)}
       />
     </>
   );
