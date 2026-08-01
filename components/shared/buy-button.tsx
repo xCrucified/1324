@@ -128,10 +128,9 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
       setCity(addr.city);
       setCitySearch(addr.city);
     }
-    if (addr.warehouse) setWarehouse(addr.warehouse);
     if (addr.cityRef) setCityRef(addr.cityRef);
+    if (addr.warehouse) setWarehouse(addr.warehouse);
     
-    // Повертаємось до форми оформлення з уже заповненими даними
     setIsChoosingAddress(false);
   };
 
@@ -140,7 +139,6 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
       setShowAuthModal(true);
       return;
     }
-    // Якщо є збережені адреси, пропонуємо спочатку обрати їх
     if (savedAddresses.length > 0) {
       setIsChoosingAddress(true);
     } else {
@@ -152,21 +150,49 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!city || !warehouse) {
+      alert('Будь ласка, оберіть місто та відділення Нової Пошти');
+      return;
+    }
+
+    setLoading(true);
+
+    // Контролер таймауту на 15 секунд, щоб запит не висів вічно
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     try {
-      setLoading(true);
+      // Зберігаємо поточну адресу в localStorage для зручності
+      const newAddress = {
+        id: Date.now().toString(),
+        addressName: `${city}, ${warehouse.slice(0, 25)}...`,
+        firstName,
+        lastName,
+        phone,
+        city,
+        cityRef,
+        warehouse,
+      };
+
+      const existingAddresses = [...savedAddresses];
+      const isDuplicate = existingAddresses.some(
+        (a) => a.city === city && a.warehouse === warehouse
+      );
+
+      if (!isDuplicate) {
+        const updatedAddresses = [newAddress, ...existingAddresses].slice(0, 5);
+        setSavedAddresses(updatedAddresses);
+        localStorage.setItem('user_novaposhta_addresses', JSON.stringify(updatedAddresses));
+      }
 
       const paymentData = {
         priceAmount: priceInUah,
-        priceInUah,
-        total: priceInUah,
         firstName,
         lastName,
         email: email || session?.user?.email || 'client@pentu24.com',
         phone,
         city,
         warehouse,
-        orderId: productId,
-        orderDescription: `${title} (${priceInUah} ₴)`,
         items: [
           {
             productId,
@@ -183,38 +209,46 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(paymentData),
+        signal: controller.signal,
       });
 
-      const result = await response.json();
+      clearTimeout(timeoutId);
+
+      // Безпечне читання відповіді (якщо сервер поверне HTML помилку)
+      const textResponse = await response.text();
+      let result;
+      try {
+        result = JSON.parse(textResponse);
+      } catch {
+        throw new Error(`Сервер повернув невалідну відповідь: ${textResponse.slice(0, 100)}`);
+      }
 
       if (!response.ok) {
-        alert(result.error || 'Помилка створення замовлення');
-        setLoading(false);
-        return;
+        throw new Error(result.error || 'Помилка створення замовлення');
       }
 
       if (!result.payment_url) {
-        alert('Monobank посилання не отримано');
-        setLoading(false);
-        return;
+        throw new Error('Monobank посилання не отримано');
       }
 
-      const monoWindow = window.open(
-        result.payment_url,
-        '_blank',
-        'noopener,noreferrer'
-      );
+      setShowCheckoutModal(false);
 
-      if (!monoWindow) {
-        alert('Браузер заблокував відкриття Monobank. Дозвольте спливаючі вікна.');
-      } else {
-        setShowCheckoutModal(false);
+      let redirectUrl = result.payment_url;
+      if (!redirectUrl.startsWith('http://') && !redirectUrl.startsWith('https://')) {
+        redirectUrl = `https://send.monobank.ua/${redirectUrl}`;
       }
 
-    } catch (error) {
+      window.location.assign(redirectUrl);
+
+    } catch (error: any) {
       console.error('Payment fetch error:', error);
-      alert('Помилка з’єднання з сервером оплати');
+      if (error.name === 'AbortError') {
+        alert('Перевищено час очікування сервера (таймаут 15с). Перевірте зв’язок із бекендом.');
+      } else {
+        alert(error.message || 'Помилка з’єднання з сервером оплати');
+      }
     } finally {
+      // ЗАВЖДИ знімає завантаження (навіть якщо сталася помилка)
       setLoading(false);
     }
   };
@@ -273,7 +307,6 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
               <p className="text-xs text-gray-500 mt-1">{title} — <span className="font-semibold text-gray-800">{priceInUah} ₴</span></p>
             </div>
 
-            {/* Екран вибору збереженої адреси */}
             {isChoosingAddress ? (
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
@@ -308,7 +341,6 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
                 </div>
               </div>
             ) : (
-              /* Форма заповнення / редагування */
               <form onSubmit={handlePaymentSubmit} className="space-y-4">
                 {savedAddresses.length > 0 && (
                   <button
@@ -371,7 +403,6 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  {/* Автокомпліт міста */}
                   <div className="relative">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Місто (Нова Пошта) *</label>
                     <input
@@ -401,7 +432,6 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
                     )}
                   </div>
 
-                  {/* Вибір відділення */}
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Відділення НП *</label>
                     <select
@@ -452,7 +482,6 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
         </div>
       )}
 
-      {/* Модалка попередження про неавторизованого користувача */}
       {showAuthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-5 relative animate-in fade-in zoom-in-95 duration-200">
@@ -460,7 +489,7 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
               onClick={() => setShowAuthModal(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5`" />
             </button>
 
             <div className="flex flex-col items-center text-center space-y-3">

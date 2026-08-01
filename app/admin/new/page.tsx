@@ -89,7 +89,7 @@ export default function NewProductPage() {
             ← Назад до панелі
           </Link>
           <h1 className="font-display font-bold text-lg text-cream tracking-wide">
-            Створення товару
+            Створення товару (грн)
           </h1>
           <div className="w-20" />
         </div>

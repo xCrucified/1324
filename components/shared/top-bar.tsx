@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { getOrders } from '@/app/actions';
-import OrdersModal from './orders-modal';
+// Видалено імпорт OrdersModal, оскільки тепер використовується окрема сторінка
 
 interface Props {
   className?: string;
@@ -14,16 +14,17 @@ interface Props {
 export const TopBar: React.FC<Props> = ({ className }) => {
   const router = useRouter();
   const { data: session, status } = useSession();
-  const [ordersOpen, setOrdersOpen] = useState(false);
+  
+  // Стейт для кількості замовлень залишаємо, щоб показувати бейдж з цифрою
   const [ordersCount, setOrdersCount] = useState(0);
 
   useEffect(() => {
+    // Завантажуємо кількість замовлень при монтуванні компонента
     getOrders()
       .then((data) => setOrdersCount(data.length))
       .catch(() => setOrdersCount(0));
-  }, [ordersOpen]);
+  }, []); 
 
-  // Додали "Мої адреси" для авторизованих
   const navItems = status === "authenticated" 
     ? ["Мої адреси", "Відстежити замовлення", "Допомога", "Вийти"] 
     : ["Відстежити замовлення", "Допомога", "Увійти", "Зареєструватися"];
@@ -32,7 +33,8 @@ export const TopBar: React.FC<Props> = ({ className }) => {
     if (item === "Мої адреси") {
       router.push("/addresses");
     } else if (item === "Відстежити замовлення") {
-      setOrdersOpen(true);
+      // Роутінг на сторінку трекінгу замість відкриття модалки
+      router.push("/tracking"); 
     } else if (item === "Увійти") {
       router.push("/login");
     } else if (item === "Зареєструватися") {
@@ -45,49 +47,39 @@ export const TopBar: React.FC<Props> = ({ className }) => {
   };
 
   return (
-    <>
-      <div className={cn("bg-bark text-parchment text-[0.71rem]", className)}>
-        <div className="max-w-7xl mx-auto px-4 py-1.5 flex items-center justify-between">
-          <div className="flex gap-4 items-center font-body opacity-80">
-            <span>
-              Ласкаво просимо до{" "}
-              <strong className="text-wheat opacity-100">
-                Маркету Pentu24
-              </strong>
-              {session?.user?.name && (
-                <span className="ml-2 text-wheat">({session.user.name})</span>
+    <div className={cn("bg-bark text-parchment text-[0.71rem]", className)}>
+      <div className="max-w-7xl mx-auto px-4 py-1.5 flex items-center justify-between">
+        <div className="flex gap-4 items-center font-body opacity-80">
+          <span>
+            Ласкаво просимо до{" "}
+            <strong className="text-wheat opacity-100">
+              Маркету Pentu24
+            </strong>
+            {session?.user?.name && (
+              <span className="ml-2 text-wheat">({session.user.name})</span>
+            )}
+          </span>
+          <span className="hidden sm:inline opacity-40">|</span>
+        </div>
+        
+        <div className="flex gap-5 items-center font-body">
+          {navItems.map((l) => (
+            <button
+              key={l}
+              onClick={() => handleTopBarClick(l)}
+              className="hover:text-wheat transition-colors opacity-80 hover:opacity-100 relative cursor-pointer"
+            >
+              {l}
+              {l === "Відстежити замовлення" && ordersCount > 0 && (
+                <span className="absolute -top-1 -right-2 bg-amber text-cream rounded-full text-[9px] w-3 h-3 flex items-center justify-center font-bold">
+                  {ordersCount}
+                </span>
               )}
-            </span>
-            <span className="hidden sm:inline opacity-40">|</span>
-          </div>
-          
-          <div className="flex gap-5 items-center font-body">
-            {navItems.map((l) => (
-              <button
-                key={l}
-                onClick={() => handleTopBarClick(l)}
-                className="hover:text-wheat transition-colors opacity-80 hover:opacity-100 relative cursor-pointer"
-              >
-                {l}
-                {l === "Відстежити замовлення" && ordersCount > 0 && (
-                  <span className="absolute -top-1 -right-2 bg-amber text-cream rounded-full text-[9px] w-3 h-3 flex items-center justify-center font-bold">
-                    {ordersCount}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
+            </button>
+          ))}
         </div>
       </div>
-
-      <OrdersModal 
-        isOpen={ordersOpen} 
-        onClose={() => {
-          setOrdersOpen(false);
-          getOrders().then((data) => setOrdersCount(data.length));
-        }} 
-      />
-    </>
+    </div>
   );
 };
 
