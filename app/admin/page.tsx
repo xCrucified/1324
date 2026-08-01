@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import OrdersTableClient from './admin-dashboard'
 import ProductsTableClient from './products-table'
+import ReviewsTableClient from './reviews-table'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +13,8 @@ export default async function AdminPage({
   searchParams: Promise<{ tab?: string }> | { tab?: string }
 }) {
   const resolvedParams = await Promise.resolve(searchParams)
-  const activeTab = resolvedParams?.tab === 'orders' ? 'orders' : 'products'
+  const tabParam = resolvedParams?.tab
+  const activeTab = tabParam === 'orders' ? 'orders' : tabParam === 'reviews' ? 'reviews' : 'products'
 
   const products = await prisma.product.findMany({
     orderBy: { createdAt: 'desc' },
@@ -33,6 +35,29 @@ export default async function AdminPage({
     })
   } catch (e) {
     orders = []
+  }
+
+  let reviews: any[] = []
+  try {
+    reviews = await prisma.review.findMany({
+      include: {
+        product: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+  } catch (e) {
+    reviews = []
   }
 
   return (
@@ -61,7 +86,7 @@ export default async function AdminPage({
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-2 bg-parchment/60 p-1 rounded-sm border border-mist w-fit">
+          <div className="flex items-center gap-2 bg-parchment/60 p-1 rounded-sm border border-mist w-fit flex-wrap">
             <Link
               href="/admin?tab=products"
               className={`px-5 py-2 font-display text-xs font-bold rounded-sm transition-all ${
@@ -82,6 +107,16 @@ export default async function AdminPage({
             >
               Оплачені замовлення ({orders.length})
             </Link>
+            <Link
+              href="/admin?tab=reviews"
+              className={`px-5 py-2 font-display text-xs font-bold rounded-sm transition-all ${
+                activeTab === 'reviews'
+                  ? 'bg-caramel text-cream shadow-sm'
+                  : 'text-bark hover:text-caramel'
+              }`}
+            >
+              Відгуки ({reviews.length})
+            </Link>
           </div>
 
           {activeTab === 'products' && (
@@ -99,6 +134,9 @@ export default async function AdminPage({
 
         {/* Вкладка замовлень */}
         {activeTab === 'orders' && <OrdersTableClient orders={orders} />}
+
+        {/* Вкладка відгуків */}
+        {activeTab === 'reviews' && <ReviewsTableClient reviews={reviews} />}
       </main>
     </div>
   )
