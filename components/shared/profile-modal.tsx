@@ -20,8 +20,21 @@ export const ProfileModal: React.FC<Props> = ({
   const { data: session, status } = useSession();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Закриття при кліку за межами вікна або натисканні Escape
- 
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener("keydown", handleEsc);
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleEsc);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -37,7 +50,7 @@ export const ProfileModal: React.FC<Props> = ({
   return (
     <div
       ref={dropdownRef}
-      className={`absolute right-0 top-full mt-2 w-[280px] bg-white rounded-2xl shadow-xl border border-amber/20 z-50 p-4 text-bark ${className}`}
+      className={`absolute top-full w-70 bg-white rounded-2xl shadow-xl border border-amber/20 z-50 p-4 text-bark ${className}`}
     >
       {/* Шапка дропдауну */}
       <div className="flex justify-between items-center pb-2 border-b border-amber/15">
