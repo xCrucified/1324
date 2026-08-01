@@ -2,11 +2,9 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { deleteOrder, deleteOrders } from './actions'
 
 export default function OrdersTableClient({ orders }: { orders: any[] }) {
-  const router = useRouter()
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [orderToDelete, setOrderToDelete] = useState<string | null>(null)
   const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false)
@@ -35,7 +33,6 @@ export default function OrdersTableClient({ orders }: { orders: any[] }) {
       await deleteOrder(orderToDelete)
       setSelectedIds(selectedIds.filter(id => id !== orderToDelete))
       setOrderToDelete(null)
-      router.refresh()
     } catch (e) {
       alert('Помилка при видаленні замовлення')
     } finally {
@@ -50,7 +47,6 @@ export default function OrdersTableClient({ orders }: { orders: any[] }) {
       await deleteOrders(selectedIds)
       setSelectedIds([])
       setIsBulkDeleteModalOpen(false)
-      router.refresh()
     } catch (e) {
       alert('Помилка при масовому видаленні замовлень')
     } finally {
@@ -70,7 +66,7 @@ export default function OrdersTableClient({ orders }: { orders: any[] }) {
 
   return (
     <div className="space-y-4">
-      {/* Панель масових дій */}
+      {/* Панель масових дій (з'являється, якщо щось вибрано) */}
       {selectedIds.length > 0 && (
         <div className="bg-bark text-parchment px-6 py-3 rounded-sm shadow-md flex items-center justify-between animate-in fade-in duration-200">
           <span className="font-body text-xs">

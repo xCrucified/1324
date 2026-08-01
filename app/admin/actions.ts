@@ -326,3 +326,38 @@ export async function deleteProduct(id: string) {
   await prisma.product.delete({ where: { id } })
   revalidatePath('/admin')
 }
+
+// Додано функцію масового видалення товарів:
+export async function deleteProducts(ids: string[]) {
+  if (!ids || ids.length === 0) return
+  await prisma.product.deleteMany({
+    where: { id: { in: ids } },
+  })
+  revalidatePath('/admin')
+}
+
+export async function deleteOrder(id: string) {
+  await prisma.order.delete({ where: { id } })
+  revalidatePath('/admin')
+}
+
+export async function deleteOrders(ids: string[]) {
+  if (!ids || ids.length === 0) return
+  await prisma.order.deleteMany({
+    where: { id: { in: ids } },
+  })
+  revalidatePath('/admin')
+}
+
+export async function updateOrderStatus(orderId: string, status: string) {
+  try {
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { status },
+    })
+    revalidatePath('/admin')
+  } catch (error) {
+    console.error('Failed to update order status:', error)
+    throw new Error('Не вдалося оновити статус замовлення')
+  }
+}
