@@ -15,7 +15,7 @@ interface Props {
 }
 
 const CATEGORIES = [
-  { label: "Кераміка", icon: "🏺", count: "2.4k товарів" },
+  { label: "#", icon: "#", count: "#" },
 
 ];
 
@@ -163,9 +163,9 @@ export const Header: React.FC<Props> = ({ className }) => {
             {[
               { label: "Головна", key: "Головна" },
               ...CATEGORIES,
-              { label: "Швидкі знижки", key: "Flash Sale" },
-              { label: "Нові надходження", key: "New Arrivals" },
-              { label: "Продавці", key: "Sellers" },
+              // { label: "Швидкі знижки", key: "Flash Sale" },
+              // { label: "Нові надходження", key: "New Arrivals" },
+              // { label: "Продавці", key: "Sellers" },
             ].map((itemObj) => {
               const itemLabel = itemObj.label;
               const itemKey = 'key' in itemObj ? itemObj.key : itemObj.label;
