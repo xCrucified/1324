@@ -2,7 +2,7 @@
 'use client'
 
 import { useState } from 'react'
-import { deleteOrder, deleteOrders } from './actions'
+import { deleteOrder, deleteOrders } from '@/app/admin/actions'
 
 export default function OrdersTableClient({ orders }: { orders: any[] }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([])

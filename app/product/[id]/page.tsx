@@ -42,14 +42,6 @@ export default async function ProductPage({ params }: Props) {
     ...(product.image && (!product.images || !product.images.includes(product.image)) ? [product.image] : []),
   ];
 
-  const seller = {
-    name: "Pentu Artisan Studio",
-    rating: 4.9,
-    sales: "1.4k",
-    avatar: "🏺",
-    joined: "Member since 2022",
-  };
-
   return (
     <>
       <TopBar />
@@ -57,7 +49,7 @@ export default async function ProductPage({ params }: Props) {
       
       <main className="max-w-7xl mx-auto px-4 py-8 bg-cream min-h-screen">
         <div className="flex items-center gap-2 text-xs text-oak font-body mb-6">
-          <Link href="/" className="hover:text-bark">Home</Link>
+          <Link href="/" className="hover:text-bark">Головна</Link>
           <span>/</span>
           {product.category && (
             <>
@@ -106,21 +98,6 @@ export default async function ProductPage({ params }: Props) {
                 />
               </div>
             </div>
-
-            <div className="mt-8 p-4 bg-wheat/50 border border-parchment rounded-sm flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-caramel/20 flex items-center justify-center text-lg">
-                  {seller.avatar}
-                </div>
-                <div>
-                  <h4 className="font-display font-bold text-xs text-bark">{seller.name}</h4>
-                  <p className="font-body text-[10px] text-oak">{seller.joined} • ⭐ {seller.rating} ({seller.sales} sales)</p>
-                </div>
-              </div>
-              <button className="border border-oak text-bark hover:bg-oak hover:text-cream transition-colors text-xs font-body px-3 py-1.5 rounded-sm cursor-pointer">
-                Visit Seller
-              </button>
-            </div>
           </div>
         </div>
 
@@ -142,7 +119,6 @@ export default async function ProductPage({ params }: Props) {
                     </span>
                   </div>
                   
-                  {/* Рендеримо рівно 5 зірочок: зафарбовані лише ті, що відповідають оцінці */}
                   <div className="flex items-center gap-0.5 text-xs my-1">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <span key={star} className={rev.rating >= star ? "text-amber" : "text-gray-300"}>
