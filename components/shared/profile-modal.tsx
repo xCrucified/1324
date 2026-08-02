@@ -1,10 +1,10 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { ProfileSettingsModal } from "./profile-settings-modal";
 
 interface Props {
   className?: string;
@@ -18,6 +18,7 @@ export const ProfileModal: React.FC<Props> = ({
   onClose,
 }) => {
   const { data: session, status } = useSession();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -113,6 +114,17 @@ export const ProfileModal: React.FC<Props> = ({
                 </Link>
               )}
 
+              {isAdmin! && (
+                <button
+                  onClick={() => {
+                    setIsSettingsOpen(true);
+                  }}
+                  className="block w-full py-2 bg-caramel hover:bg-amber text-white font-body text-xs font-bold rounded-xl text-center transition-colors shadow-xs"
+                  >
+                    Налаштування
+                </button>
+              )}
+
               <button
                 onClick={() => {
                   onClose();
@@ -140,6 +152,9 @@ export const ProfileModal: React.FC<Props> = ({
           </div>
         )}
       </div>
+      {isSettingsOpen && (
+        <ProfileSettingsModal />
+      )}
     </div>
   );
 };
