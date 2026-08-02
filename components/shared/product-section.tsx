@@ -31,22 +31,18 @@ export const ProductSection: React.FC<Props> = ({
   className,
 }) => {
   const { savedItems, toggleSave } = useShopStore();
-  let categoryParam = "Home";
-  if (title.includes("New Arrivals")) categoryParam = "New Arrivals";
-  else if (title.includes("Hot Items")) categoryParam = "Flash Sale";
-  else if (title.includes("Recommended")) categoryParam = "Home";
-  // Note: compute saved status per product when rendering
 
   return (
     <section className={`max-w-7xl mx-auto px-4 py-6 ${className || ""}`}>
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-display font-bold text-lg text-bark">{title}</h2>
 
+        {/* Змінено посилання на сторінку /store */}
         <Link
-          href={`/?category=${encodeURIComponent(categoryParam)}`}
+          href="/store"
           className="font-body text-xs text-caramel hover:text-amber font-bold transition-colors"
         >
-          See all →
+          Переглянути всі →
         </Link>
       </div>
 

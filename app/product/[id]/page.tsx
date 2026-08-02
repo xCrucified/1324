@@ -67,9 +67,6 @@ export default async function ProductPage({ params }: Props) {
 
           <div className="flex flex-col justify-between">
             <div>
-              <span className="text-xs font-body text-caramel uppercase tracking-widest">
-                {product.category?.name || "Handmade"}
-              </span>
               <h1 className="font-display font-bold text-2xl md:text-3xl text-bark mt-1">
                 {product.title}
               </h1>
