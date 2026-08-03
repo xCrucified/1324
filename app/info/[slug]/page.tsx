@@ -1,11 +1,10 @@
-'use client';
-
-import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image'; // Додано імпорт Image
 import { notFound } from 'next/navigation';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import TopBar from '@/components/shared/top-bar';
+import FaqAccordion from '@/components/faq-accordion';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -24,7 +23,7 @@ interface FaqSection {
 interface PageData {
   title: string;
   subtitle: string;
-  content?: string[];
+  content?: (string | React.ReactNode)[];
   faqSections?: FaqSection[];
 }
 
@@ -35,33 +34,43 @@ const infoPages: Record<string, PageData> = {
     subtitle: "Дізнайтеся більше про маркетплейс Pentu24",
     content: [
       "Pentu24 — це сучасний міжнародний маркетплейс, який об'єднує продавців і покупців, надаючи зручну платформу для пошуку та придбання якісних товарів. Наша мета — зробити онлайн-шопінг простим, безпечним і доступним для кожного.",
+      // Додано блок з картинкою
+      <div key="about-image" className="relative w-full h-64 md:h-96 my-6 rounded-lg overflow-hidden border border-parchment">
+        <Image 
+          src="/about-image.png" /* ВАЖЛИВО: Замініть цей шлях на реальний шлях до вашої картинки в папці public */
+          alt="Команда та атмосфера Pentu24"
+          fill
+          className="object-cover"
+        />
+      </div>,
       "Ми співпрацюємо з перевіреними продавцями та прагнемо забезпечити широкий асортимент товарів, конкурентні ціни, надійні способи оплати й швидку доставку. Команда Pentu24 постійно працює над удосконаленням сервісу, щоб кожен клієнт отримував найкращий досвід покупок."
     ],
   },
   "careers": {
-    title: "Careers at Pentu24",
-    subtitle: "Build the future of independent commerce with us",
+    title: "Кар'єра в Pentu24",
+    subtitle: "Будуйте майбутнє незалежної комерції разом з нами",
     content: [
-      "We are always looking for passionate, creative, and driven individuals to join our growing team. Whether you're in engineering, design, maker relations, or customer support, Pentu24 offers a collaborative and inspiring workspace.",
-      "Check back regularly for open positions or send your portfolio and resume directly to careers@pentu24.com.",
+      "Ми завжди шукаємо пристрасних, креативних та цілеспрямованих людей, які готові приєднатися до нашої команди, що постійно зростає. Незалежно від того, чи працюєте ви в розробці, дизайні, роботі з клієнтами чи підтримці, Pentu24 пропонує надихаючий робочий простір.",
+      "Регулярно перевіряйте наявність відкритих вакансій або надсилайте своє портфоліо та резюме безпосередньо на careers@pentu24.com.",
     ],
   },
   "press": {
-    title: "Press & Media",
-    subtitle: "News, brand assets, and media resources",
+    title: "Преса та медіа",
+    subtitle: "Новини, бренд-активи та медіаресурси",
     content: [
-      "Welcome to the Pentu24 Press Room. Here journalists, bloggers, and creators can find our latest press releases, brand guidelines, high-resolution logos, and media kits.",
-      "For press inquiries, interview requests, or partnership opportunities, please contact our PR team at press@pentu24.com.",
+      "Ласкаво просимо до прес-центру Pentu24. Тут журналісти, блогери та креатори можуть знайти наші останні прес-релізи, правила використання бренду, логотипи у високій роздільній здатності та медіа-кіти.",
+      "З питань преси, запитів на інтерв'ю або щодо можливостей партнерства, будь ласка, зв'яжіться з нашою PR-командою за адресою press@pentu24.com.",
     ],
   },
 
   // HELP & SUPPORT
   "track-your-order": {
-    title: "Track Your Order",
-    subtitle: "Check the delivery status of your artisan parcels",
+    title: "Відстеження замовлення",
+    subtitle: "Перевірте статус доставки ваших посилок",
     content: [
-      "You can easily track your active orders by navigating to the 'Orders' tab in the top right corner of the website navigation bar.",
-      "Once your independent maker ships your item, tracking numbers and courier details will appear directly inside your order details history.",
+      "Ви можете легко відстежити свої активні замовлення, перейшовши на вкладку 'Замовлення' у верхньому правому куті навігаційної панелі сайту.",
+      "Щойно продавець відправить ваш товар, номери для відстеження та деталі кур'єрської служби з'являться безпосередньо в історії вашого замовлення.",
+      <span key="track">Крім того, <Link href="/tracking" className="text-caramel underline hover:text-bark font-semibold">відстежити ваше замовлення можна тут</Link>.</span>
     ],
   },
   "returns-policy": {
@@ -123,86 +132,86 @@ const infoPages: Record<string, PageData> = {
     ]
   },
   "contact-us": {
-    title: "Contact Support",
-    subtitle: "We're here to help you 24/7",
+    title: "Служба підтримки",
+    subtitle: "Ми готові допомогти вам 24/7",
     content: [
-      "Need assistance with an order, account settings, or technical issue? Our support squad is always ready to assist.",
-      "Drop us an email at support@pentu24.com and we'll get back to you within 24 hours.",
+      "Потрібна допомога із замовленням, налаштуваннями акаунта або виникла технічна проблема? Наша команда підтримки завжди готова допомогти.",
+      "Напишіть нам на електронну пошту support@pentu24.com, і ми відповімо вам протягом 24 годин.",
     ],
   },
 
   // SELLER HUB
   "open-a-shop": {
-    title: "Open Your Shop on Pentu24",
-    subtitle: "Turn your passion into a thriving business",
+    title: "Відкрийте свій магазин на Pentu24",
+    subtitle: "Перетворіть свою пристрасть на успішний бізнес",
     content: [
-      "Starting your shop takes less than 5 minutes. Set up your storefront, customize your branding, and list your handmade creations to millions of conscious buyers worldwide.",
-      "Enjoy powerful analytics, streamlined inventory management, and a supportive community of fellow creators.",
+      "Створення вашого магазину займає менше ніж 5 хвилин. Налаштуйте свою вітрину, додайте власний брендинг і пропонуйте свої товари мільйонам свідомих покупців по всьому світу.",
+      "Насолоджуйтесь потужною аналітикою, зручним управлінням запасами та підтримкою спільноти однодумців.",
     ],
   },
   "seller-fees": {
-    title: "Transparent Seller Fees",
-    subtitle: "No hidden costs, straightforward pricing",
+    title: "Прозорі комісії",
+    subtitle: "Жодних прихованих платежів, зрозуміле ціноутворення",
     content: [
-      "We believe in keeping more money in the pockets of hardworking creators. Listing an item is completely free, and we only charge a small transparent commission fee when a successful sale is made.",
+      "Ми віримо, що творці повинні зберігати більше зароблених коштів. Розміщення товару є абсолютно безкоштовним, і ми стягуємо лише невелику прозору комісію за успішний продаж.",
     ],
   },
   "seller-protection": {
-    title: "Seller Protection Programme",
-    subtitle: "Trading securely with peace of mind",
+    title: "Програма захисту продавців",
+    subtitle: "Безпечна торгівля зі спокоєм",
     content: [
-      "Our Seller Protection framework safeguards you against fraudulent chargebacks, delivery disputes, and unauthorized transactions, ensuring you can focus purely on creating wonderful products.",
+      "Наша система захисту продавців оберігає вас від шахрайських повернень платежів, суперечок щодо доставки та несанкціонованих транзакцій, дозволяючи вам зосередитися виключно на створенні чудових продуктів.",
     ],
   },
   "community-forum": {
-    title: "Maker Community Forum",
-    subtitle: "Connect, share tips, and grow together",
+    title: "Форум спільноти",
+    subtitle: "Спілкуйтеся, діліться порадами та розвивайтеся разом",
     content: [
-      "Join thousands of artisans in our global community forum. Exchange crafting tips, discuss photography styles, share marketing strategies, and collaborate on seasonal collection edits.",
+      "Приєднуйтесь до тисяч майстрів на нашому глобальному форумі спільноти. Обмінюйтеся порадами щодо створення товарів, обговорюйте стилі фотографій, діліться маркетинговими стратегіями та співпрацюйте.",
     ],
   },
   "advertising": {
-    title: "Pentu24 Ads & Promotion",
-    subtitle: "Boost your shop visibility",
+    title: "Реклама та просування",
+    subtitle: "Збільште видимість вашого магазину",
     content: [
-      "Supercharge your product reach with on-site promotional tools and targeted placements across high-traffic categories and seasonal banner slots.",
+      "Розширте охоплення своїх товарів за допомогою рекламних інструментів платформи та цільового розміщення у категоріях з високим трафіком та сезонних банерах.",
     ],
   },
 
   // DISCOVER
   "gift-ideas": {
-    title: "Curated Gift Ideas",
-    subtitle: "Thoughtful presents for every special occasion",
+    title: "Ідеї для подарунків",
+    subtitle: "Продумані подарунки для кожної особливої нагоди",
     content: [
-      "Stuck on what to gift? Explore our hand-picked selections of artisan ceramics, organic candles, bespoke leather goods, and personalized homeware designed to bring joy to your loved ones.",
+      "Не знаєте, що подарувати? Досліджуйте наші добірки ремісничої кераміки, органічних свічок, шкіряних виробів на замовлення та персоналізованих товарів для дому, створених, щоб приносити радість вашим близьким.",
     ],
   },
   "seasonal-edits": {
-    title: "Seasonal Edits & Trends",
-    subtitle: "Fresh inspirations for every time of year",
+    title: "Сезонні колекції та тренди",
+    subtitle: "Свіжі натхнення для кожної пори року",
     content: [
-      "From cozy autumn textiles and winter candle collections to breezy spring botanicals and summer table settings, explore our curated seasonal drops.",
+      "Від затишного осіннього текстилю та зимових колекцій свічок до весняних ботанічних мотивів та літнього сервірування столу — відкривайте для себе наші сезонні новинки.",
     ],
   },
   "new-arrivals": {
-    title: "New Arrivals",
-    subtitle: "The freshest creations from our community",
+    title: "Нові надходження",
+    subtitle: "Найсвіжіші творіння від нашої спільноти",
     content: [
-      "Be the first to explore brand-new items freshly uploaded by our independent makers today.",
+      "Будьте першими, хто дізнається про абсолютно нові товари, щойно додані нашими незалежними майстрами сьогодні.",
     ],
   },
   "flash-deals": {
-    title: "Flash Deals & Hot Items",
-    subtitle: "Limited-time offers on exceptional finds",
+    title: "Швидкі розпродажі та гарячі товари",
+    subtitle: "Обмежені в часі пропозиції на виняткові знахідки",
     content: [
-      "Discover daily special offers, fast-selling favorites, and discounted artisan goods before they run out.",
+      "Відкривайте для себе щоденні спеціальні пропозиції, популярні товари, що швидко розкуповуються, та знижки на авторські вироби, поки вони не закінчилися.",
     ],
   },
   "top-shops": {
-    title: "Top-Rated Shops",
-    subtitle: "Meet our most beloved community creators",
+    title: "Найкращі магазини",
+    subtitle: "Знайомтеся з нашими найулюбленішими творцями спільноти",
     content: [
-      "Explore star-rated independent studios with thousands of glowing customer reviews and stellar delivery track records.",
+      "Досліджуйте незалежні студії з найвищими рейтингами, тисячами захоплених відгуків клієнтів і бездоганною репутацією щодо доставки.",
     ],
   },
 
@@ -249,71 +258,13 @@ const infoPages: Record<string, PageData> = {
     ]
   },
   "sitemap": {
-    title: "Marketplace Sitemap",
-    subtitle: "Quick directory of all site sections",
+    title: "Карта маркетплейсу",
+    subtitle: "Швидкий довідник по всіх розділах сайту",
     content: [
-      "Easily navigate through every category, seller hub, support article, and legal document available across the Pentu24 platform.",
+      "Легко орієнтуйтеся в кожній категорії, центрі продавців, статтях підтримки та юридичних документах, доступних на платформі Pentu24.",
     ],
   },
 };
-
-// Керований клієнтський компонент для акордеону FAQ
-function FaqAccordion({ sections }: { sections: FaqSection[] }) {
-  const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
-
-  const toggleItem = (sectionIdx: number, itemIdx: number) => {
-    const key = `${sectionIdx}-${itemIdx}`;
-    setOpenItems(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
-  };
-
-  return (
-    <div className="space-y-8 w-full">
-      {sections.map((section, sectionIdx) => (
-        <div key={sectionIdx} className="w-full">
-          <h2 className="font-display text-xl text-bark mb-4 font-semibold">
-            {section.category}
-          </h2>
-          
-          <div className="space-y-3 w-full">
-            {section.items.map((item, itemIdx) => {
-              const key = `${sectionIdx}-${itemIdx}`;
-              const isOpen = !!openItems[key];
-
-              return (
-                <div 
-                  key={itemIdx} 
-                  className="w-full bg-white border border-parchment rounded-md overflow-hidden transition-all duration-200"
-                >
-                  <button
-                    type="button"
-                    onClick={() => toggleItem(sectionIdx, itemIdx)}
-                    className="w-full flex items-center justify-between gap-4 cursor-pointer font-body text-sm text-bark p-4 font-medium hover:bg-cream transition-colors text-left outline-none"
-                  >
-                    <span className="flex-1">{item.question}</span>
-                    <span className={`transition-transform duration-300 text-caramel flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="m6 9 6 6 6-6"/>
-                      </svg>
-                    </span>
-                  </button>
-                  
-                  {isOpen && (
-                    <div className="px-4 pb-4 pt-1 text-xs md:text-sm text-oak leading-relaxed border-t border-parchment/30 bg-white break-words w-full">
-                      {item.answer}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 export default async function InfoPage({ params }: Props) {
   const resolvedParams = await params;
@@ -336,14 +287,12 @@ export default async function InfoPage({ params }: Props) {
       <Header />
 
       <main className="max-w-4xl mx-auto px-4 py-12 bg-cream min-h-screen">
-        {/* Хлебные крошки */}
         <div className="flex items-center gap-2 text-xs text-oak font-body mb-6">
-          <Link href="/" className="hover:text-bark">Home</Link>
+          <Link href="/" className="hover:text-bark">Головна</Link>
           <span>/</span>
           <span className="text-bark">{pageData.title}</span>
         </div>
 
-        {/* Основной контент страницы */}
         <div className="bg-ivory border border-parchment p-8 rounded-sm w-full">
           <h1 className="font-display font-bold text-3xl text-bark mb-2">
             {pageData.title}
@@ -357,10 +306,17 @@ export default async function InfoPage({ params }: Props) {
               <FaqAccordion sections={pageData.faqSections} />
             ) : (
               <div className="space-y-4 w-full">
-                {pageData.content?.map((paragraph, idx) => (
-                  <p key={idx} className="font-body text-xs md:text-sm text-oak leading-relaxed whitespace-pre-line break-words w-full">
-                    {paragraph}
-                  </p>
+                {/* ОНОВЛЕНО: Перевірка типу для уникнення помилок рендеру (Hydration Error) */}
+                {pageData.content?.map((item, idx) => (
+                  typeof item === 'string' ? (
+                    <p key={idx} className="font-body text-xs md:text-sm text-oak leading-relaxed whitespace-pre-line break-words w-full">
+                      {item}
+                    </p>
+                  ) : (
+                    <div key={idx} className="w-full font-body text-xs md:text-sm text-oak leading-relaxed">
+                      {item}
+                    </div>
+                  )
                 ))}
               </div>
             )}
