@@ -1,10 +1,11 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/app/api/auth/[...nextauth]/route'; // Путь к твоему файлу конфига NextAuth
+import { auth } from '@/app/api/auth/[...nextauth]/route'; 
 import { revalidatePath } from 'next/cache';
+import { put } from "@vercel/blob";
+import bcrypt from "bcryptjs";
 
-// Создание заказа из чекаута
 export async function createOrder(data: {
   firstName: string;
   lastName: string;
@@ -76,4 +77,48 @@ export async function getOrders() {
     console.error('Failed to fetch orders:', error);
     return [];
   }
+}
+
+export async function updateProfile(formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Не авторизовано");
+  }
+
+  const firstName = formData.get("firstName") as string;
+  const lastName = formData.get("lastName") as string;
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+  const avatarFile = formData.get("avatarFile") as File | null;
+
+  const updateData: { name: string; email: string; password?: string; image?: string } = {
+    name: `${firstName.trim()} ${lastName.trim()}`.trim(),
+    email: email.trim(),
+  };
+
+  if (password && password.length >= 6) {
+    updateData.password = await bcrypt.hash(password, 10);
+  }
+
+  if (avatarFile && avatarFile.size > 0) {
+    // Сохраняем в Vercel Blob
+    const blob = await put(`avatars/${session.user.id}-${Date.now()}-${avatarFile.name}`, avatarFile, {
+      access: 'public',
+    });
+    updateData.image = blob.url;
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: session.user.id },
+    data: updateData,
+  });
+
+  return { 
+    success: true, 
+    user: {
+      name: updatedUser.name,
+      email: updatedUser.email,
+      image: updatedUser.image,
+    } 
+  };
 }

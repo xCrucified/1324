@@ -12,48 +12,80 @@ interface Props {
   onClose: () => void;
 }
 
+const getSecureImageUrl = (url: string | null | undefined) => {
+  if (!url) return null;
+  if (url.includes("vercel-storage.com")) {
+    return `/api/avatar?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+};
+
 export const ProfileModal: React.FC<Props> = ({
   className = "",
   isOpen,
   onClose,
 }) => {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [dbUser, setDbUser] = useState<{ name: string | null; email: string | null; image: string | null; role: string | null } | null>(null);
+  const [loadingUser, setLoadingUser] = useState(false);
+  
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleEsc = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
+    if (!isOpen) return;
+
+    let active = true;
+
+    const loadUserData = async () => {
+      try {
+        setLoadingUser(true);
+        const res = await fetch("/api/profile");
+        if (!active) return;
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            setDbUser(data.user);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch fresh user data", e);
+      } finally {
+        if (active) setLoadingUser(false);
       }
     };
 
-    if (isOpen) {
-      window.addEventListener("keydown", handleEsc);
-    }
+    loadUserData();
 
     return () => {
-      window.removeEventListener("keydown", handleEsc);
+      active = false;
     };
+  }, [isOpen, isSettingsOpen]); // Перезавантажуємо дані з бази коли закриваються налаштування
+
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    if (isOpen) window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
-  const user = session?.user;
-  const isAdmin = user?.role === "admin";
+  const isAdmin = dbUser?.role === "admin";
 
   const getInitials = () => {
-    if (user?.name) return user.name[0].toUpperCase();
-    if (user?.email) return user.email[0].toUpperCase();
+    if (dbUser?.name) return dbUser.name[0].toUpperCase();
+    if (dbUser?.email) return dbUser.email[0].toUpperCase();
     return "U";
   };
 
   return (
     <div
       ref={dropdownRef}
-      className={`absolute top-full w-70 bg-white rounded-2xl shadow-xl border border-amber/20 z-50 p-4 text-bark ${className}`}
+      className={`absolute top-15 right-0 mt-2 w-70 bg-white rounded-2xl shadow-xl border border-amber/25 z-50 p-4 text-bark ${className}`}
     >
-      {/* Шапка дропдауну */}
       <div className="flex justify-between items-center pb-2 border-b border-amber/15">
         <h2 className="text-xs font-bold text-bark uppercase tracking-wider">
           Профіль
@@ -67,31 +99,29 @@ export const ProfileModal: React.FC<Props> = ({
         </button>
       </div>
 
-      {/* Контент */}
       <div className="mt-3">
-        {status === "loading" ? (
+        {status === "loading" || loadingUser ? (
           <div className="text-center py-4 text-oak animate-pulse font-body text-xs">
-            Завантаження...
+            Завантаження з бази...
           </div>
-        ) : user ? (
+        ) : dbUser ? (
           <div className="flex flex-col items-center text-center">
-            {/* Аватарка */}
+            {/* Аватарка з урахуванням захищеного посилання */}
             <Avatar className="w-14 h-14 border-2 border-amber/30 shadow-xs mb-2">
-              <AvatarImage src={user.image || ""} alt={user.name || "User"} />
+              <AvatarImage src={getSecureImageUrl(dbUser.image) || ""} alt={dbUser.name || "User"} />
               <AvatarFallback className="bg-parchment text-caramel font-bold text-base">
                 {getInitials()}
               </AvatarFallback>
             </Avatar>
 
-            {/* Інформація */}
+            {/* Ім'я та пошта напряму з бази */}
             <h3 className="text-sm font-bold text-bark truncate max-w-full">
-              {user.name || "Користувач"}
+              {dbUser.name || "Користувач"}
             </h3>
             <p className="text-[0.7rem] text-oak truncate max-w-full mb-2">
-              {user.email}
+              {dbUser.email}
             </p>
 
-            {/* Роль */}
             <span
               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[0.6rem] font-bold tracking-wider uppercase mb-4 ${
                 isAdmin
@@ -102,7 +132,6 @@ export const ProfileModal: React.FC<Props> = ({
               {isAdmin ? "Адміністратор" : "Покупець"}
             </span>
 
-            {/* Кнопки дій */}
             <div className="w-full space-y-2">
               {isAdmin && (
                 <Link
@@ -114,16 +143,12 @@ export const ProfileModal: React.FC<Props> = ({
                 </Link>
               )}
 
-              {isAdmin! && (
-                <button
-                  onClick={() => {
-                    setIsSettingsOpen(true);
-                  }}
-                  className="block w-full py-2 bg-caramel hover:bg-amber text-white font-body text-xs font-bold rounded-xl text-center transition-colors shadow-xs"
-                  >
-                    Налаштування
-                </button>
-              )}
+              <button
+                onClick={() => setIsSettingsOpen(true)}
+                className="block w-full py-2 bg-caramel hover:bg-amber text-white font-body text-xs font-bold rounded-xl text-center transition-colors shadow-xs"
+              >
+                Налаштування
+              </button>
 
               <button
                 onClick={() => {
@@ -137,7 +162,6 @@ export const ProfileModal: React.FC<Props> = ({
             </div>
           </div>
         ) : (
-          /* Незалогінений стан */
           <div className="text-center py-2">
             <p className="text-xs text-oak mb-4 leading-relaxed">
               Увійдіть у свій акаунт, щоб керувати замовленнями.
@@ -152,9 +176,11 @@ export const ProfileModal: React.FC<Props> = ({
           </div>
         )}
       </div>
-      {isSettingsOpen && (
-        <ProfileSettingsModal />
-      )}
+
+      <ProfileSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </div>
   );
 };
