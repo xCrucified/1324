@@ -1,7 +1,11 @@
+import { Suspense } from 'react';
 import { prisma } from '@/lib/prisma';
 import StoreClient from './store-client';
 import TopBar from '@/components/shared/top-bar';
 import Header from '@/components/header';
+
+// Примусовий динамічний рендеринг для уникнення помилок prerender з useSearchParams
+export const dynamic = 'force-dynamic';
 
 export default async function StorePage() {
   // Отримуємо всі товари з бази даних
@@ -17,7 +21,9 @@ export default async function StorePage() {
 
       {/* Головний контейнер з фільтрами та сіткою товарів */}
       <main className="max-w-7xl mx-auto px-4 mt-6">
-        <StoreClient initialProducts={products} />
+        <Suspense fallback={<div className="p-12 text-center text-oak text-sm">Завантаження каталогу...</div>}>
+          <StoreClient initialProducts={products} />
+        </Suspense>
       </main>
     </div>
   );
