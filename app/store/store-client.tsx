@@ -18,13 +18,10 @@ interface Props {
 }
 
 export default function StoreClient({ initialProducts }: Props) {
-  // Отримуємо збережені товари, функцію toggleSave та додавання до кошика із Zustand
   const { savedItems, toggleSave, addToCart } = useShopStore();
   
-  // Категорії
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  // Визначаємо максимальну ціну за замовчуванням
   const defaultMaxPrice = useMemo(() => {
     if (initialProducts.length === 0) return 20000;
     const max = Math.max(...initialProducts.map((p) => p.price));
@@ -34,10 +31,8 @@ export default function StoreClient({ initialProducts }: Props) {
   const [minPrice, setMinPrice] = useState<number>(0);
   const [maxPrice, setMaxPrice] = useState<number>(defaultMaxPrice);
 
-  // Сортування
   const [sortOrder, setSortOrder] = useState<'default' | 'asc' | 'desc'>('default');
 
-  // Отримуємо список унікальних категорій
   const categories = useMemo(() => {
     const cats = initialProducts
       .map((p) => p.categoryId)
@@ -45,7 +40,6 @@ export default function StoreClient({ initialProducts }: Props) {
     return ['all', ...Array.from(new Set(cats))];
   }, [initialProducts]);
 
-  // Фільтрація та сортування товарів (без пошуку)
   const filteredProducts = useMemo(() => {
     return initialProducts
       .filter((p) => {
@@ -70,7 +64,6 @@ export default function StoreClient({ initialProducts }: Props) {
 
   return (
     <div className="flex flex-col lg:flex-row gap-8">
-      {/* Сайдбар з фільтрами */}
       <aside className="w-full lg:w-72 bg-white border border-parchment rounded-sm p-5 h-fit shadow-sm space-y-6">
         <div className="flex items-center justify-between border-b border-parchment pb-3">
           <h2 className="font-display font-bold text-sm text-bark tracking-wide uppercase">
@@ -84,7 +77,6 @@ export default function StoreClient({ initialProducts }: Props) {
           </button>
         </div>
 
-        {/* Фільтр за категоріями */}
         <div>
           <label className="block text-xs font-semibold text-oak mb-2">
             Категорія / Тип
@@ -106,13 +98,11 @@ export default function StoreClient({ initialProducts }: Props) {
           </div>
         </div>
 
-        {/* Двостороннє регулювання ціни */}
         <div>
           <label className="block text-xs font-semibold text-oak mb-2">
             Ціна (₴)
           </label>
           
-          {/* Числові поля введення */}
           <div className="flex items-center gap-2 mb-4">
             <div className="relative flex-1">
               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-oak">від</span>
@@ -145,12 +135,9 @@ export default function StoreClient({ initialProducts }: Props) {
             </div>
           </div>
 
-          {/* Подвійний слайдер (Range Inputs Dual) */}
           <div className="relative h-5 flex items-center">
-            {/* Базова сіра лінія */}
             <div className="absolute w-full h-1 bg-parchment rounded-sm" />
 
-            {/* Активна лінія між бігунками */}
             <div
               className="absolute h-1 bg-bark rounded-sm pointer-events-none"
               style={{
@@ -159,7 +146,6 @@ export default function StoreClient({ initialProducts }: Props) {
               }}
             />
 
-            {/* Повзунок для мінімальної ціни */}
             <input
               type="range"
               min="0"
@@ -173,7 +159,6 @@ export default function StoreClient({ initialProducts }: Props) {
               className="absolute w-full appearance-none bg-transparent pointer-events-none accent-bark [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-bark [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none"
             />
 
-            {/* Повзунок для максимальної ціни */}
             <input
               type="range"
               min="0"
@@ -189,7 +174,6 @@ export default function StoreClient({ initialProducts }: Props) {
           </div>
         </div>
 
-        {/* Сортування */}
         <div>
           <label className="block text-xs font-semibold text-oak mb-2">
             Сортування
@@ -206,7 +190,6 @@ export default function StoreClient({ initialProducts }: Props) {
         </div>
       </aside>
 
-      {/* Основна частина з результатами */}
       <div className="flex-1">
         <div className="flex items-center justify-between mb-4 bg-white border border-parchment p-3 rounded-sm">
           <span className="text-xs text-oak">
@@ -245,7 +228,6 @@ export default function StoreClient({ initialProducts }: Props) {
                       id: cardProduct.id,
                       name: cardProduct.name,
                       price: cardProduct.price,
-                      originalPrice: cardProduct.originalPrice,
                       img: cardProduct.img,
                       shop: cardProduct.shop,
                       sold: cardProduct.sold,
@@ -258,7 +240,6 @@ export default function StoreClient({ initialProducts }: Props) {
                       id: cardProduct.id,
                       name: cardProduct.name,
                       price: cardProduct.price,
-                      originalPrice: cardProduct.originalPrice,
                       img: cardProduct.img,
                       shop: cardProduct.shop,
                       sold: cardProduct.sold,
