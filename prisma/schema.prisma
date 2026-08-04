@@ -11,10 +11,12 @@ model User {
   id               String    @id @default(cuid())
   name             String?
   email            String?   @unique
-  password         String?     
+  password         String?    
+  termsAccepted    Boolean   @default(false)
+  role             String    @default("user") 
   emailVerified    DateTime?
-  verificationCode String?   // Новое поле для 6-значного кода
-  codeExpires      DateTime? // Время истечения срока действия кода
+  verificationCode String?   // 6-значний код для верифікації
+  codeExpires      DateTime? // Час закінчення терміну дії коду
   image            String?
   accounts         Account[]
   sessions         Session[]
@@ -129,13 +131,12 @@ model Favorite {
 
 model Review {
   id        String   @id @default(cuid())
-  rating    Int      // Оцінка (наприклад, від 1 до 5)
+  rating    Int      // Оцінка (від 1 до 5)
   text      String   @db.Text // Текст відгуку
   createdAt DateTime @default(now())
 
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  user      User     @relation(fields:[userId], references: [id], onDelete: Cascade)
   productId String
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }

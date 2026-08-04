@@ -3,6 +3,7 @@ import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -15,43 +16,38 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        code: { label: "Code", type: "text" },
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.code) {
-          throw new Error("Введите email и код подтверждения");
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Введіть email та пароль");
         }
 
-        // Поиск пользователя в базе
+        const email = (credentials.email as string).trim().toLowerCase();
+        const password = credentials.password as string;
+
+        // Пошук користувача в базі
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
+          where: { email },
         });
 
-        if (!user || !user.verificationCode || !user.codeExpires) {
-          throw new Error("Код не найден или не запрашивался");
+        if (!user || !user.password) {
+          throw new Error("Невірний email або пароль");
         }
 
-        // Проверка срока действия кода (10 минут)
-        if (new Date() > user.codeExpires) {
-          throw new Error("Срок действия кода истек");
+        // Порівняння введеного пароля із захешованим у базі
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordValid) {
+          throw new Error("Невірний email або пароль");
         }
 
-        // Проверка совпадения кода
-        if (user.verificationCode !== (credentials.code as string)) {
-          throw new Error("Неверный код подтверждения");
-        }
-
-        // Успех: очищаем использованный код и помечаем email как подтвержденный
-        await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            verificationCode: null,
-            codeExpires: null,
-            emailVerified: new Date(),
-          },
-        });
-
-        return user;
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+        };
       },
     }),
   ],
