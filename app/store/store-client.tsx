@@ -233,7 +233,7 @@ export default function StoreClient({ initialProducts }: Props) {
                       sold: cardProduct.sold,
                       rating: cardProduct.rating,
                       reviews: cardProduct.reviews,
-                    });
+                    } as any);
                   }}
                   onAdd={() => {
                     addToCart({
@@ -245,7 +245,7 @@ export default function StoreClient({ initialProducts }: Props) {
                       sold: cardProduct.sold,
                       rating: cardProduct.rating,
                       reviews: cardProduct.reviews,
-                    });
+                    } as any);
                   }}
                 />
               );
