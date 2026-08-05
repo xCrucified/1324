@@ -8,20 +8,23 @@ datasource db {
 }
 
 model User {
-  id            String       @id @default(cuid())
-  name          String?
-  email         String?      @unique
-  password      String?    
-  termsAccepted Boolean      @default(false)
-  role          String       @default("user") 
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  orders        Order[]
-  favorites     Favorite[]
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id               String    @id @default(cuid())
+  name             String?
+  email            String?   @unique
+  password         String?    
+  termsAccepted    Boolean   @default(false)
+  role             String    @default("user") 
+  emailVerified    DateTime?
+  verificationCode String?   // 6-значний код для верифікації
+  codeExpires      DateTime? // Час закінчення терміну дії коду
+  image            String?
+  accounts         Account[]
+  sessions         Session[]
+  orders           Order[]
+  favorites        Favorite[]
+  reviews          Review[]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
 
 model Account {
@@ -133,7 +136,7 @@ model Review {
   createdAt DateTime @default(now())
 
   userId    String
-  user      User     @relation(fields:[userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   productId String
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
