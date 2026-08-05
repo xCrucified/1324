@@ -13,17 +13,16 @@ export default function RegisterPage() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Состояния для баннера-куки
+  // Стан для згоди та cookie-банера
   const [isAgreed, setIsAgreed] = useState(false);
   const [showBanner, setShowBanner] = useState(false);
 
-  // Проверяем localStorage при загрузке страницы
+  // Перевіряємо localStorage при завантаженні сторінки
   useEffect(() => {
     const accepted = localStorage.getItem("pentu_terms_accepted");
     const dismissed = localStorage.getItem("pentu_terms_dismissed");
@@ -31,10 +30,19 @@ export default function RegisterPage() {
     if (accepted === "true") {
       setIsAgreed(true);
     } else if (dismissed !== "true") {
-      // Показываем, только если не приняли и не скрывали вручную
       setShowBanner(true);
     }
-  }, []); 
+  }, []);
+
+  const handleCheckboxChange = (checked: boolean) => {
+    setIsAgreed(checked);
+    if (checked) {
+      localStorage.setItem("pentu_terms_accepted", "true");
+      setError("");
+    } else {
+      localStorage.removeItem("pentu_terms_accepted");
+    }
+  };
 
   const handleAcceptBanner = () => {
     localStorage.setItem("pentu_terms_accepted", "true");
@@ -52,23 +60,19 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
-    // Если попытались отправить форму без согласия
     if (!isAgreed) {
-      setError("Пожалуйста, примите условия политики пользования");
-      setShowBanner(true);
+      setError("Будь ласка, прийміть умови користування та політику повернення");
       return;
     }
 
     setLoading(true);
 
-    // 1. Перевірка імені та прізвища
     if (!firstName.trim() || !lastName.trim()) {
       setError("Будь ласка, вкажіть ваше ім'я та прізвище.");
       setLoading(false);
       return;
     }
 
-    // 2. Валідація Email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setError("Будь ласка, введіть дійсний формат електронної пошти.");
@@ -76,7 +80,6 @@ export default function RegisterPage() {
       return;
     }
 
-    // 3. Валідація складності пароля (мін. 8 символів, літери + цифри)
     const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d).{8,}$/;
     if (!passwordRegex.test(password)) {
       setError("Пароль має містити щонайменше 8 символів, включаючи літери та цифри.");
@@ -88,12 +91,13 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/send-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           firstName,
           lastName,
-          email, 
+          email,
           password,
-          termsAccepted: isAgreed // Передаем согласие на сервер
+          termsAccepted: isAgreed,
+          isRegister: true,
         }),
       });
 
@@ -140,8 +144,7 @@ export default function RegisterPage() {
 
   const handleGoogleSignIn = () => {
     if (!isAgreed) {
-      setError("Пожалуйста, примите условия политики пользования");
-      setShowBanner(true);
+      setError("Будь ласка, прийміть умови користування та політику повернення");
       return;
     }
     signIn("google", { callbackUrl: "/" });
@@ -149,7 +152,7 @@ export default function RegisterPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 relative overflow-hidden">
-      <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-md">
+      <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-md z-10">
         <div className="text-center">
           <Link href="/" className="inline-block mb-3">
             <span className="text-2xl font-bold tracking-tight text-gray-900">
@@ -174,7 +177,6 @@ export default function RegisterPage() {
 
         {step === "credentials" ? (
           <form onSubmit={handleRegister} className="mt-6 space-y-4">
-            {/* Поля Ім'я та Прізвище */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -204,7 +206,6 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Email */}
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Електронна пошта
@@ -213,13 +214,12 @@ export default function RegisterPage() {
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value.trim())}
-                placeholder="name@example.com"
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="taras@example.com"
                 className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-xs text-gray-900 focus:border-orange-500 focus:outline-none transition bg-gray-50/30"
               />
             </div>
 
-            {/* Пароль */}
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Пароль
@@ -230,133 +230,147 @@ export default function RegisterPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 pr-10 text-xs text-gray-900 focus:border-orange-500 focus:outline-none transition bg-gray-50/30"
+                  placeholder="Мінімум 8 символів"
+                  className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-xs text-gray-900 focus:border-orange-500 focus:outline-none transition bg-gray-50/30 pr-16"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-500 hover:text-orange-500 transition"
                 >
-                  {showPassword ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  )}
+                  {showPassword ? "Сховати" : "Показати"}
                 </button>
               </div>
+            </div>
+
+            {/* Чекбокс з роутами /info/... */}
+            <div className="flex items-start gap-2 pt-2 pb-2">
+              <input
+                type="checkbox"
+                id="terms"
+                checked={isAgreed}
+                onChange={(e) => handleCheckboxChange(e.target.checked)}
+                className="mt-0.5 rounded border-gray-300 text-orange-500 focus:ring-orange-500 cursor-pointer"
+              />
+              <label htmlFor="terms" className="text-xs text-gray-600 leading-tight">
+                Я погоджуюсь з{" "}
+                <Link href="/info/terms" target="_blank" className="text-orange-500 hover:underline">
+                  Умовами використання
+                </Link>{" "}
+                та{" "}
+                <Link href="/info/returns-policy" target="_blank" className="text-orange-500 hover:underline">
+                  Політикою повернення
+                </Link>.
+              </label>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-orange-500 px-4 py-2.5 text-xs font-medium text-white hover:bg-orange-600 transition disabled:opacity-50 cursor-pointer shadow-sm"
+              className="w-full rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-orange-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
-              {loading ? "Створення..." : "Зареєструватися"}
+              {loading ? "Завантаження..." : "Зареєструватися"}
             </button>
+
+            <div className="relative flex items-center py-2">
+              <div className="flex-grow border-t border-gray-200"></div>
+              <span className="shrink-0 px-4 text-xs text-gray-400">Або</span>
+              <div className="flex-grow border-t border-gray-200"></div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none transition"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24">
+                <path
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  fill="#4285F4"
+                />
+                <path
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  fill="#34A853"
+                />
+                <path
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                  fill="#FBBC05"
+                />
+                <path
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                  fill="#EA4335"
+                />
+              </svg>
+              Google
+            </button>
+            
+            <p className="text-center text-xs text-gray-600 mt-4">
+              Вже маєте акаунт?{" "}
+              <Link href="/login" className="text-orange-500 font-semibold hover:underline">
+                Увійти
+              </Link>
+            </p>
           </form>
         ) : (
           <form onSubmit={handleVerifyCode} className="mt-6 space-y-4">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
-                6-значний код
+                Код підтвердження
               </label>
               <input
                 type="text"
-                maxLength={6}
                 required
                 value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                onChange={(e) => setCode(e.target.value)}
                 placeholder="123456"
-                className="w-full text-center tracking-widest text-base rounded-xl border border-gray-200 px-3.5 py-2.5 text-gray-900 focus:border-orange-500 focus:outline-none transition bg-gray-50/30"
+                className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-center text-lg tracking-widest text-gray-900 focus:border-orange-500 focus:outline-none transition bg-gray-50/30"
               />
             </div>
-
             <button
               type="submit"
-              disabled={loading || code.length !== 6}
-              className="w-full rounded-xl bg-orange-500 px-4 py-2.5 text-xs font-medium text-white hover:bg-orange-600 transition disabled:opacity-50 cursor-pointer shadow-sm"
+              disabled={loading}
+              className="w-full rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-orange-600 focus:outline-none disabled:opacity-50 transition"
             >
-              {loading ? "Перевірка..." : "Підтвердити код"}
+              {loading ? "Перевірка..." : "Підтвердити"}
             </button>
             <button
               type="button"
               onClick={() => setStep("credentials")}
-              className="w-full text-center text-xs text-gray-500 hover:text-gray-800 transition mt-2 cursor-pointer"
+              className="w-full text-xs text-gray-500 hover:text-gray-900 transition mt-2"
             >
-              Назад до введення даних
+              Повернутися назад
             </button>
           </form>
         )}
-
-        {step === "credentials" && (
-          <>
-            <div className="relative flex py-2 items-center">
-              <div className="flex-grow border-t border-gray-200"></div>
-              <span className="flex-shrink mx-4 text-xs text-gray-400">або</span>
-              <div className="flex-grow border-t border-gray-200"></div>
-            </div>
-
-            <div>
-              <button
-                onClick={handleGoogleSignIn}
-                className="w-full flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-xs font-medium text-gray-700 shadow-xs hover:bg-gray-50 transition cursor-pointer"
-              >
-                <svg className="h-4 w-4" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                </svg>
-                Зареєструватися через Google
-              </button>
-            </div>
-
-            <p className="mt-6 text-center text-xs text-gray-500">
-              Вже є акаунт?{" "}
-              <Link href="/login" className="font-medium text-orange-500 hover:underline">
-                Увійти
-              </Link>
-            </p>
-          </>
-        )}
       </div>
 
-      {/* Всплывающее окно / Cookie banner слева снизу */}
+      {/* Cookie Banner з роутами /info/... */}
       {showBanner && (
-        <div className="fixed bottom-6 left-6 z-50 w-80 rounded-xl bg-white p-5 shadow-2xl border border-gray-200 animate-in slide-in-from-bottom-5">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-sm font-semibold text-gray-900">
-              Соглашение пользователя
-            </h3>
-            <button 
-              onClick={handleDismissBanner}
-              className="text-gray-400 hover:text-gray-600 transition"
-              aria-label="Закрыть"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          <p className="text-xs text-gray-600 mb-4">
-            Мы используем файлы cookie. Для регистрации и использования платформы необходимо ознакомиться и согласиться с нашей{" "}
-            <Link href="/info/terms" className="text-blue-600 hover:underline" target="_blank">
-              политикой пользования
+        <div className="fixed bottom-0 left-0 w-full bg-gray-900 text-white p-4 z-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-gray-300">
+            Ми використовуємо файли cookie. Продовжуючи, ви погоджуєтесь з нашими{" "}
+            <Link href="/info/terms" className="text-orange-400 hover:underline">
+              Умовами використання
+            </Link>{" "}
+            та{" "}
+            <Link href="/info/returns-policy" className="text-orange-400 hover:underline">
+              Політикою повернення
             </Link>.
           </p>
-          
-          <button
-            onClick={handleAcceptBanner}
-            className="w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 transition"
-          >
-            Принять и продолжить
-          </button>
+          <div className="flex gap-3 shrink-0 w-full sm:w-auto">
+            <button
+              onClick={handleDismissBanner}
+              className="flex-1 sm:flex-none px-4 py-2 text-xs font-medium text-gray-300 hover:text-white transition"
+            >
+              Відхилити
+            </button>
+            <button
+              onClick={handleAcceptBanner}
+              className="flex-1 sm:flex-none px-4 py-2 text-xs font-medium bg-orange-500 rounded-lg hover:bg-orange-600 transition"
+            >
+              Прийняти
+            </button>
+          </div>
         </div>
       )}
     </div>
