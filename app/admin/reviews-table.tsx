@@ -3,20 +3,21 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { deleteOrder, deleteOrders } from './actions'
+import Link from 'next/link'
+import { deleteReview, deleteReviews } from './actions'
 
-export default function OrdersTableClient({ orders }: { orders: any[] }) {
+export default function ReviewsTableClient({ reviews }: { reviews: any[] }) {
   const router = useRouter()
   const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const [orderToDelete, setOrderToDelete] = useState<string | null>(null)
+  const [reviewToDelete, setReviewToDelete] = useState<string | null>(null)
   const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
   const toggleSelectAll = () => {
-    if (selectedIds.length === orders.length) {
+    if (selectedIds.length === reviews.length) {
       setSelectedIds([])
     } else {
-      setSelectedIds(orders.map(o => o.id))
+      setSelectedIds(reviews.map(r => r.id))
     }
   }
 
@@ -29,15 +30,15 @@ export default function OrdersTableClient({ orders }: { orders: any[] }) {
   }
 
   const handleSingleDelete = async () => {
-    if (!orderToDelete) return
+    if (!reviewToDelete) return
     setIsDeleting(true)
     try {
-      await deleteOrder(orderToDelete)
-      setSelectedIds(selectedIds.filter(id => id !== orderToDelete))
-      setOrderToDelete(null)
+      await deleteReview(reviewToDelete)
+      setSelectedIds(selectedIds.filter(id => id !== reviewToDelete))
+      setReviewToDelete(null)
       router.refresh()
     } catch (e) {
-      alert('Помилка при видаленні замовлення')
+      alert('Помилка при видаленні відгуку')
     } finally {
       setIsDeleting(false)
     }
@@ -47,26 +48,26 @@ export default function OrdersTableClient({ orders }: { orders: any[] }) {
     if (selectedIds.length === 0) return
     setIsDeleting(true)
     try {
-      await deleteOrders(selectedIds)
+      await deleteReviews(selectedIds)
       setSelectedIds([])
       setIsBulkDeleteModalOpen(false)
       router.refresh()
     } catch (e) {
-      alert('Помилка при масовому видаленні замовлень')
+      alert('Помилка при масовому видаленні відгуків')
     } finally {
       setIsDeleting(false)
     }
   }
 
-  if (orders.length === 0) {
+  if (reviews.length === 0) {
     return (
       <div className="bg-ivory border border-parchment rounded-sm shadow-sm overflow-hidden p-12 text-center text-oak font-body">
-        Ще немає оплачених замовлень у системі.
+        Ще немає залишених відгуків у системі.
       </div>
     )
   }
 
-  const allSelected = orders.length > 0 && selectedIds.length === orders.length
+  const allSelected = reviews.length > 0 && selectedIds.length === reviews.length
 
   return (
     <div className="space-y-4">
@@ -74,7 +75,7 @@ export default function OrdersTableClient({ orders }: { orders: any[] }) {
       {selectedIds.length > 0 && (
         <div className="bg-bark text-parchment px-6 py-3 rounded-sm shadow-md flex items-center justify-between animate-in fade-in duration-200">
           <span className="font-body text-xs">
-            Вибрано замовлень: <strong className="text-wheat">{selectedIds.length}</strong>
+            Вибрано відгуків: <strong className="text-wheat">{selectedIds.length}</strong>
           </span>
           <button
             type="button"
@@ -99,60 +100,65 @@ export default function OrdersTableClient({ orders }: { orders: any[] }) {
                     className="cursor-pointer accent-caramel w-4 h-4 rounded"
                   />
                 </th>
-                <th className="p-4">ID / Дата</th>
-                <th className="p-4">Покупець (Акаунт)</th>
-                <th className="p-4">Контакти / Доставка</th>
-                <th className="p-4">Сума</th>
-                <th className="p-4">Статус</th>
+                <th className="p-4">Користувач</th>
+                <th className="p-4">Товар</th>
+                <th className="p-4">Оцінка та текст</th>
+                <th className="p-4">Дата</th>
                 <th className="p-4 text-right">Дії</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-parchment/60">
-              {orders.map((order) => {
-                const isSelected = selectedIds.includes(order.id)
+              {reviews.map((rev) => {
+                const isSelected = selectedIds.includes(rev.id)
                 return (
                   <tr 
-                    key={order.id} 
+                    key={rev.id} 
                     className={`transition-colors font-body text-sm ${isSelected ? 'bg-caramel/10' : 'hover:bg-parchment/20'}`}
                   >
                     <td className="p-4 text-center">
                       <input
                         type="checkbox"
                         checked={isSelected}
-                        onChange={() => toggleSelectOne(order.id)}
+                        onChange={() => toggleSelectOne(rev.id)}
                         className="cursor-pointer accent-caramel w-4 h-4 rounded"
                       />
                     </td>
                     <td className="p-4">
-                      <div className="font-mono text-xs text-bark font-bold">#{order.id.slice(-6)}</div>
-                      <div className="text-[11px] text-oak">
-                        {new Date(order.createdAt).toLocaleString('uk-UA')}
+                      <div className="font-display font-semibold text-bark">
+                        {rev.user?.name || rev.user?.email?.split('@')[0] || 'Анонім'}
+                      </div>
+                      <div className="text-xs text-oak">
+                        {rev.user?.email || ''}
                       </div>
                     </td>
                     <td className="p-4">
-                      <div className="font-display font-semibold text-bark">
-                        {order.user?.name || order.customerName || 'Гість / Анонім'}
+                      <Link 
+                        href={`/product/${rev.productId}`} 
+                        target="_blank"
+                        className="text-amber hover:underline font-semibold text-xs line-clamp-2 max-w-xs"
+                      >
+                        {rev.product?.title || 'Товар'}
+                      </Link>
+                    </td>
+                    <td className="p-4 max-w-md">
+                      <div className="flex items-center gap-0.5 text-xs text-amber mb-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <span key={star} className={rev.rating >= star ? "text-amber" : "text-gray-300"}>
+                            ★
+                          </span>
+                        ))}
                       </div>
-                      <div className="text-xs text-oak">
-                        {order.user?.email || order.email || 'Email не вказано'}
-                      </div>
+                      <p className="text-xs text-bark italic bg-wheat/20 p-2 rounded-sm line-clamp-2">
+                        &ldquo;{rev.text}&rdquo;
+                      </p>
                     </td>
-                    <td className="p-4 text-xs text-bark">
-                      <div>{order.address || order.shippingAddress || 'Самовивіз / Не вказано'}</div>
-                      <div className="text-oak">{order.phone || ''}</div>
-                    </td>
-                    <td className="p-4 font-bold text-amber whitespace-nowrap">
-                      ₴ {Number(order.total || order.amount || 0).toFixed(2)}
-                    </td>
-                    <td className="p-4 whitespace-nowrap">
-                      <span className="inline-block bg-amber/10 text-amber border border-amber/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
-                        {order.status || 'Оплачено'}
-                      </span>
+                    <td className="p-4 text-xs text-oak whitespace-nowrap">
+                      {new Date(rev.createdAt).toLocaleDateString('uk-UA')}
                     </td>
                     <td className="p-4 text-right whitespace-nowrap">
                       <button
                         type="button"
-                        onClick={() => setOrderToDelete(order.id)}
+                        onClick={() => setReviewToDelete(rev.id)}
                         className="text-red-700 hover:text-red-900 font-semibold text-xs transition-colors cursor-pointer"
                       >
                         Видалити
@@ -166,17 +172,17 @@ export default function OrdersTableClient({ orders }: { orders: any[] }) {
         </div>
       </div>
 
-      {/* Модалка для видалення одного замовлення */}
-      {orderToDelete && (
+      {/* Модалка для видалення одного відгуку */}
+      {reviewToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-5 relative animate-in fade-in zoom-in-95 duration-200">
             <div className="flex flex-col items-center text-center space-y-3">
               <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-600 font-bold text-lg">
                 !
               </div>
-              <h3 className="text-lg font-bold text-gray-900">Видалити замовлення?</h3>
+              <h3 className="text-lg font-bold text-gray-900">Видалити відгук?</h3>
               <p className="text-sm text-gray-500 leading-relaxed">
-                Цю дію неможливо скасувати. Замовлення #{orderToDelete.slice(-6)} буде остаточно видалено з бази даних.
+                Цю дію неможливо скасувати. Відгук буде остаточно видалено з бази даних.
               </p>
             </div>
 
@@ -184,7 +190,7 @@ export default function OrdersTableClient({ orders }: { orders: any[] }) {
               <button
                 type="button"
                 disabled={isDeleting}
-                onClick={() => setOrderToDelete(null)}
+                onClick={() => setReviewToDelete(null)}
                 className="w-1/2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-4 rounded-xl transition-all text-sm cursor-pointer disabled:opacity-50"
               >
                 Скасувати
@@ -202,7 +208,7 @@ export default function OrdersTableClient({ orders }: { orders: any[] }) {
         </div>
       )}
 
-      {/* Модалка для масового видалення */}
+      {/* Модалка для масового видалення відгуків */}
       {isBulkDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-5 relative animate-in fade-in zoom-in-95 duration-200">
@@ -210,9 +216,9 @@ export default function OrdersTableClient({ orders }: { orders: any[] }) {
               <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-600 font-bold text-lg">
                 !
               </div>
-              <h3 className="text-lg font-bold text-gray-900">Видалити вибрані замовлення?</h3>
+              <h3 className="text-lg font-bold text-gray-900">Видалити вибрані відгуки?</h3>
               <p className="text-sm text-gray-500 leading-relaxed">
-                Ви збираєтесь видалити <strong className="text-gray-900">{selectedIds.length}</strong> замовлень. Цю дію неможливо скасувати.
+                Ви збираєтесь видалити <strong className="text-gray-900">{selectedIds.length}</strong> відгуків. Цю дію неможливо скасувати.
               </p>
             </div>
 

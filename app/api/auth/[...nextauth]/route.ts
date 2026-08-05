@@ -20,27 +20,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Enter email and password");
+          throw new Error("Введіть email та пароль");
         }
 
+        const email = (credentials.email as string).trim().toLowerCase();
+        const password = credentials.password as string;
+
+        // Пошук користувача в базі
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
+          where: { email },
         });
 
         if (!user || !user.password) {
-          throw new Error("User wasn't found");
+          throw new Error("Невірний email або пароль");
         }
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        );
+        // Порівняння введеного пароля із захешованим у базі
+        const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (!isPasswordValid) {
-          throw new Error("Invalid password");
+          throw new Error("Невірний email або пароль");
         }
 
-        return user;
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+        };
       },
     }),
   ],

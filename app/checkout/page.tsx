@@ -4,47 +4,57 @@
 
 import React, { useState, useEffect } from 'react';
 import { useShopStore } from '@/store/use-shop';
-import { initializePaddle, Paddle } from '@paddle/paddle-js';
 import Link from 'next/link';
 import RecipientForm, { RecipientData } from '@/components/shared/recipient-form';
 
 export default function CheckoutPage() {
   const { items, clearCart } = useShopStore();
-  const [paddle, setPaddle] = useState<Paddle>();
   const [loading, setLoading] = useState(false);
 
-  // Контактні дані (не залежать від адреси доставки)
+  // Контактні дані
   const [email, setEmail] = useState('');
   const [telegram, setTelegram] = useState('');
 
-  // Стейт для адрес Нової Пошти
+  // Завантаження адрес з localStorage (синхронізовано з app/addresses)
   const [savedAddresses, setSavedAddresses] = useState<RecipientData[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState<RecipientData | null>(null);
 
   useEffect(() => {
-    initializePaddle({ 
-      environment: 'sandbox', 
-      token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN! 
-    }).then((paddleInstance: Paddle | undefined) => {
-      if (paddleInstance) {
-        setPaddle(paddleInstance);
+    const saved = localStorage.getItem('user_novaposhta_addresses');
+    if (saved) {
+      try {
+        const parsed: RecipientData[] = JSON.parse(saved);
+        setSavedAddresses(parsed);
+        // Автоматично вибираємо першу адресу, якщо вона є
+        if (parsed.length > 0) {
+          setSelectedAddressId(parsed[0].id || null);
+        }
+      } catch (e) {
+        console.error(e);
       }
-    });
+    }
   }, []);
+
+  const saveAddressesToStorage = (updated: RecipientData[]) => {
+    setSavedAddresses(updated);
+    localStorage.setItem('user_novaposhta_addresses', JSON.stringify(updated));
+  };
 
   const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  // Обробка збереження адреси з RecipientForm
+  // Збереження нової чи відредагованої адреси
   const handleSaveAddress = (data: RecipientData) => {
+    let updated: RecipientData[];
     if (editingAddress && data.id) {
-      setSavedAddresses((prev) => prev.map((a) => (a.id === data.id ? data : a)));
+      updated = savedAddresses.map((a) => (a.id === data.id ? data : a));
     } else {
       const newAddress = { ...data, id: Date.now().toString() };
-      setSavedAddresses((prev) => [...prev, newAddress]);
-      setSelectedAddressId(newAddress.id); // Автоматично обираємо нову адресу
+      updated = [...savedAddresses, newAddress];
+      setSelectedAddressId(newAddress.id);
     }
+    saveAddressesToStorage(updated);
     setShowForm(false);
     setEditingAddress(null);
   };
@@ -57,11 +67,6 @@ export default function CheckoutPage() {
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!paddle) {
-      alert('Модуль оплаты еще загружается...');
-      return;
-    }
-
     if (items.length === 0) {
       alert('Ваш кошик порожній');
       return;
@@ -70,7 +75,7 @@ export default function CheckoutPage() {
     const selectedAddress = savedAddresses.find((a) => a.id === selectedAddressId);
 
     if (!selectedAddress) {
-      alert('Будь ласка, додайте та оберіть адресу доставки Новою Поштою.');
+      alert('Будь ласка, оберіть або додайте адресу доставки Новою Поштою.');
       return;
     }
 
@@ -106,25 +111,18 @@ export default function CheckoutPage() {
         throw new Error(orderData.error || 'Помилка при створенні замовлення в базі');
       }
 
-      const paddleItems = items.map((item) => ({
-        priceId: process.env.PADDLE_PRICE_ID || 'pri_01kydgjadqhb94zscnszd4ccec',
-        quantity: item.quantity,
-      }));
+clearCart();
 
-      paddle.Checkout.open({
-        items: paddleItems,
-        customer: {
-          email: email,
-        },
-        settings: {
-          successUrl: `${window.location.origin}/?success=true&orderId=${orderData.payment_id || ''}`,
-        },
-      });
+if (orderData.payment_url) {
+  window.location.replace(orderData.payment_url);
+  return;
+}
 
-      // clearCart();
-    } catch (error) {
-      console.error('Ошибка Paddle Checkout:', error);
-      alert('Не удалось запустить оплату. Перевірте поля форми.');
+window.location.href = `/?success=true&orderId=${orderData.payment_id || ''}`;
+
+    } catch (error: any) {
+      console.error('Помилка оформлення замовлення:', error);
+      alert(error?.message || 'Не вдалося оформити замовлення. Спробуйте ще раз.');
     } finally {
       setLoading(false);
     }
@@ -136,12 +134,12 @@ export default function CheckoutPage() {
         <div className="w-20 h-20 bg-parchment rounded-full flex items-center justify-center text-3xl mb-4">
           🛒
         </div>
-        <h1 className="font-display font-bold text-2xl text-bark mb-2">Your cart is empty</h1>
+        <h1 className="font-display font-bold text-2xl text-bark mb-2">Ваш кошик порожній</h1>
         <Link 
           href="/"
           className="px-6 py-2.5 bg-bark text-cream font-bold rounded-sm hover:bg-caramel transition-colors"
         >
-          Return to Shop
+          Продовжити покупки
         </Link>
       </div>
     );
@@ -151,18 +149,23 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-cream py-10 px-4 relative font-body text-bark">
       <div className="max-w-2xl mx-auto">
         <Link href="/" className="text-xs text-oak hover:text-caramel transition-colors mb-6 inline-block">
-          ← Back to Marketplace
+          ← Назад до магазину
         </Link>
         
-        <h1 className="font-display font-bold text-3xl text-bark mb-8">Checkout & Delivery</h1>
+        <h1 className="font-display font-bold text-3xl text-bark mb-8">Оформлення та доставка</h1>
 
         <form onSubmit={handleCheckout} className="space-y-6">
           
-          {/* Блок 1: Адреса доставки */}
+          {/* Блок 1: Адреса доставки (синхронізована з localStorage) */}
           <div className="bg-ivory border border-parchment p-6 rounded-sm space-y-4">
-            <h2 className="font-display font-bold text-lg text-bark border-b border-parchment pb-2">
-              1. Дані отримувача (Нова Пошта)
-            </h2>
+            <div className="flex justify-between items-center border-b border-parchment pb-2">
+              <h2 className="font-display font-bold text-lg text-bark">
+                1. Дані отримувача (Нова Пошта)
+              </h2>
+              <Link href="/addresses" className="text-xs text-oak hover:text-caramel underline">
+                Керувати адресами
+              </Link>
+            </div>
 
             {showForm ? (
               <div className="pt-2">
@@ -197,12 +200,12 @@ export default function CheckoutPage() {
                               e.stopPropagation();
                               handleEditAddress(addr);
                             }}
-                            className="text-xs text-oak hover:text-caramel"
+                            className="text-xs text-oak hover:text-caramel cursor-pointer"
                           >
                             Редагувати
                           </button>
                         </div>
-                        <p className="text-sm text-bark">{addr.firstName} {addr.lastName}</p>
+                        <p className="text-sm text-bark">{addr.firstName} {addr.lastName} {addr.patronymic}</p>
                         <p className="text-sm text-oak mb-2">{addr.phone}</p>
                         <div className="text-xs text-bark bg-parchment/30 p-2 rounded-sm">
                           <p className="font-semibold">м. {addr.city}</p>
@@ -217,8 +220,11 @@ export default function CheckoutPage() {
 
                 <button
                   type="button"
-                  onClick={() => setShowForm(true)}
-                  className="w-full py-2 border border-bark text-bark font-bold rounded-sm hover:bg-bark hover:text-cream transition-colors text-sm"
+                  onClick={() => {
+                    setEditingAddress(null);
+                    setShowForm(true);
+                  }}
+                  className="w-full py-2 border border-bark text-bark font-bold rounded-sm hover:bg-bark hover:text-cream transition-colors text-sm cursor-pointer"
                 >
                   + Додати нову адресу доставки
                 </button>
@@ -226,7 +232,7 @@ export default function CheckoutPage() {
             )}
           </div>
 
-          {/* Блок 2: Контактні дані для зв'язку/чеку */}
+          {/* Блок 2: Контактні дані */}
           <div className="bg-ivory border border-parchment p-6 rounded-sm space-y-4">
             <h2 className="font-display font-bold text-lg text-bark border-b border-parchment pb-2">
               2. Контактні дані
@@ -259,7 +265,7 @@ export default function CheckoutPage() {
           {/* Блок 3: Замовлення та оплата */}
           <div className="bg-ivory border border-parchment p-6 rounded-sm space-y-6">
             <h2 className="font-display font-bold text-lg text-bark border-b border-parchment pb-2">
-              Order Summary
+              Деталі замовлення
             </h2>
 
             <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
@@ -274,24 +280,24 @@ export default function CheckoutPage() {
                       </div>
                     )}
                   </div>
-                  <span className="font-bold text-bark">€{(item.price * item.quantity).toFixed(2)}</span>
+                  <span className="font-bold text-bark">{(item.price * item.quantity).toFixed(2)} грн</span>
                 </div>
               ))}
             </div>
 
             <div className="border-t border-parchment pt-4 space-y-2 font-body text-sm">
               <div className="flex justify-between text-bark font-bold text-base pt-2">
-                <span>Total (Tax & VAT handled by Paddle)</span>
-                <span className="text-amber">€{totalAmount.toFixed(2)}</span>
+                <span>Загалом:</span>
+                <span className="text-amber">{totalAmount.toFixed(2)} грн</span>
               </div>
             </div>
 
             <button
               type="submit"
-              disabled={loading || !paddle || showForm}
+              disabled={loading || showForm}
               className="w-full py-3.5 bg-bark text-cream font-bold rounded-sm hover:bg-caramel transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              {loading ? 'Processing...' : 'Pay with Paddle'}
+              {loading ? 'Обробка...' : 'Підтвердити замовлення'}
             </button>
           </div>
         </form>

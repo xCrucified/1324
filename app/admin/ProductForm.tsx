@@ -11,7 +11,7 @@ export default function ProductForm({ action }: ProductFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [filesList, setFilesList] = useState<File[]>([])
 
-  // Функция обновления файлов в реальном инпуте через DataTransfer
+  // Функція оновлення файлів у реальному інпуті через DataTransfer
   const updateInputFiles = (newFiles: File[]) => {
     const dataTransfer = new DataTransfer()
     newFiles.forEach((file) => dataTransfer.items.add(file))
@@ -22,7 +22,7 @@ export default function ProductForm({ action }: ProductFormProps) {
     setFilesList(newFiles)
   }
 
-  // Выбор файлов через проводник
+  // Вибір файлів через провідник
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files
     if (!selectedFiles || selectedFiles.length === 0) return
@@ -35,7 +35,7 @@ export default function ProductForm({ action }: ProductFormProps) {
     setPreviews((prev) => [...prev, ...newPreviews])
   }
 
-  // Вставка файлов через Ctrl + V
+  // Вставка файлів через Ctrl + V
   const handlePaste = (e: ClipboardEvent<HTMLDivElement>) => {
     const items = e.clipboardData?.items
     if (!items) return
@@ -61,7 +61,7 @@ export default function ProductForm({ action }: ProductFormProps) {
     }
   }
 
-  // Удаление отдельной картинки
+  // Видалення окремої картинки
   const handleRemoveImage = (index: number) => {
     const updatedFiles = filesList.filter((_, i) => i !== index)
     updateInputFiles(updatedFiles)
@@ -75,22 +75,22 @@ export default function ProductForm({ action }: ProductFormProps) {
       action={action}
       className="bg-white p-6 rounded-lg shadow-md border mb-8 space-y-4"
     >
-      <h2 className="text-lg font-semibold border-b pb-2">Добавить товар вручную</h2>
+      <h2 className="text-lg font-semibold border-b pb-2">Додати товар вручну</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Название товара *</label>
+          <label className="block text-sm font-medium mb-1">Назва товару *</label>
           <input 
             type="text" 
             name="title" 
             required 
-            placeholder="Например: Стильная куртка" 
+            placeholder="Наприклад: Стильна куртка" 
             className="w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/5"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Цена (€) *</label>
+          <label className="block text-sm font-medium mb-1">Ціна (грн) *</label>
           <input 
             type="number" 
             step="0.01" 
@@ -103,7 +103,7 @@ export default function ProductForm({ action }: ProductFormProps) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Ссылка на товар (1688 / Pinduoduo / и т.д. — необязательно)</label>
+        <label className="block text-sm font-medium mb-1">Посилання на товар (1688 / Pinduoduo / і т.д. — необов'язково)</label>
         <input 
           type="text" 
           name="sourceUrl" 
@@ -114,17 +114,17 @@ export default function ProductForm({ action }: ProductFormProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Цвета (каждый с новой строки или через запятую)</label>
+          <label className="block text-sm font-medium mb-1">Кольори (кожний з нового рядка або через кому)</label>
           <textarea 
             name="colors" 
             rows={3} 
-            placeholder="Черный&#10;Белый&#10;Красный" 
+            placeholder="Чорний&#10;Білий&#10;Червоний" 
             className="w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/5"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Размеры (каждый с новой строки или через запятую)</label>
+          <label className="block text-sm font-medium mb-1">Розміри (кожний з нового рядка або через кому)</label>
           <textarea 
             name="sizes" 
             rows={3} 
@@ -134,21 +134,21 @@ export default function ProductForm({ action }: ProductFormProps) {
         </div>
       </div>
 
-      {/* Зона загрузки с поддержкой Ctrl + V */}
+      {/* Зона завантаження з підтримкою Ctrl + V */}
       <div 
         tabIndex={0}
         onPaste={handlePaste}
         className="space-y-3 p-4 bg-gray-50 rounded-lg border focus:outline-none focus:ring-2 focus:ring-black/20 cursor-pointer"
-        title="Кликните сюда и нажмите Ctrl + V, чтобы вставить фото из буфера обмена"
+        title="Клікніть сюди та натисніть Ctrl + V, щоб вставити фото з буфера обміну"
       >
         <div className="flex justify-between items-center">
           <label className="block text-sm font-medium text-gray-800 cursor-pointer">
-            Фотографии товара <span className="text-xs text-gray-500 font-normal">(Кликните сюда и нажмите <kbd className="bg-gray-200 px-1 rounded">Ctrl + V</kbd>)</span>
+            Фотографії товару <span className="text-xs text-gray-500 font-normal">(Клікніть сюди та натисніть <kbd className="bg-gray-200 px-1 rounded">Ctrl + V</kbd>)</span>
           </label>
         </div>
         
         <div>
-          <span className="block text-xs font-medium text-gray-600 mb-1">1. Выбрать файлы с компьютера или вставить через Ctrl+V:</span>
+          <span className="block text-xs font-medium text-gray-600 mb-1">1. Вибрати файли з комп'ютера або вставити через Ctrl+V:</span>
           <input 
             ref={fileInputRef}
             type="file" 
@@ -161,7 +161,7 @@ export default function ProductForm({ action }: ProductFormProps) {
         </div>
 
         <div>
-          <span className="block text-xs font-medium text-gray-600 mb-1">2. Или указать ссылки на фото (каждая с новой строки):</span>
+          <span className="block text-xs font-medium text-gray-600 mb-1">2. Або вказати посилання на фото (кожне з нового рядка):</span>
           <textarea 
             name="imagesText" 
             rows={2} 
@@ -172,24 +172,24 @@ export default function ProductForm({ action }: ProductFormProps) {
           />
         </div>
 
-        {/* Превью картинок */}
+        {/* Прев'ю картинок */}
         {previews.length > 0 && (
           <div>
-            <span className="block text-xs font-medium text-gray-700 mb-2">Превью выбранных фото (первое будет главным):</span>
+            <span className="block text-xs font-medium text-gray-700 mb-2">Попередній перегляд обраних фото (перше буде головним):</span>
             <div className="flex flex-wrap gap-3">
               {previews.map((src, index) => (
                 <div key={index} className="relative w-20 h-20 border rounded bg-white overflow-hidden shadow-sm group">
                   <img src={src} alt="Preview" className="w-full h-full object-cover" />
                   {index === 0 && (
                     <span className="absolute bottom-0 inset-x-0 bg-black/70 text-white text-[9px] text-center font-medium py-0.5">
-                      Главное
+                      Головне
                     </span>
                   )}
                   <button
                     type="button"
                     onClick={() => handleRemoveImage(index)}
                     className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow"
-                    title="Удалить фото"
+                    title="Видалити фото"
                   >
                     ×
                   </button>
@@ -201,20 +201,20 @@ export default function ProductForm({ action }: ProductFormProps) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Описание товара</label>
+        <label className="block text-sm font-medium mb-1">Опис товару</label>
         <textarea 
           name="description" 
           rows={3} 
-          placeholder="Подробное описание товара..." 
+          placeholder="Детальний опис товару..." 
           className="w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/5"
         />
       </div>
 
       <button 
         type="submit" 
-        className="bg-black text-white px-6 py.2.5 rounded text-sm font-medium hover:bg-gray-800 transition w-full md:w-auto"
+        className="bg-black text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-gray-800 transition w-full md:w-auto"
       >
-        Добавить товар
+        Додати товар
       </button>
     </form>
   )

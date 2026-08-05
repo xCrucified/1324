@@ -326,3 +326,79 @@ export async function deleteProduct(id: string) {
   await prisma.product.delete({ where: { id } })
   revalidatePath('/admin')
 }
+
+export async function deleteProducts(ids: string[]) {
+  if (!ids || ids.length === 0) return
+  await prisma.product.deleteMany({
+    where: { id: { in: ids } },
+  })
+  revalidatePath('/admin')
+}
+
+export async function deleteOrder(id: string) {
+  await prisma.order.delete({ where: { id } })
+  revalidatePath('/admin')
+}
+
+export async function deleteOrders(ids: string[]) {
+  if (!ids || ids.length === 0) return
+  await prisma.order.deleteMany({
+    where: { id: { in: ids } },
+  })
+  revalidatePath('/admin')
+}
+
+export async function updateOrderStatus(orderId: string, status: string) {
+  try {
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { status },
+    })
+    revalidatePath('/admin')
+  } catch (error) {
+    console.error('Failed to update order status:', error)
+    throw new Error('Не вдалося оновити статус замовлення')
+  }
+}
+
+// Додано екшени для видалення відгуків:
+export async function deleteReview(reviewId: string) {
+  if (process.env.NODE_ENV !== 'development') {
+    throw new Error('Дія заборонена')
+  }
+
+  const review = await prisma.review.findUnique({
+    where: { id: reviewId },
+  })
+
+  if (!review) return
+
+  await prisma.review.delete({
+    where: { id: reviewId },
+  })
+
+  revalidatePath(`/product/${review.productId}`)
+  revalidatePath('/admin')
+}
+
+export async function deleteReviews(reviewIds: string[]) {
+  if (process.env.NODE_ENV !== 'development') {
+    throw new Error('Дія заборонена')
+  }
+
+  if (!reviewIds || reviewIds.length === 0) return
+
+  const reviews = await prisma.review.findMany({
+    where: { id: { in: reviewIds } },
+    select: { id: true, productId: true },
+  })
+
+  await prisma.review.deleteMany({
+    where: { id: { in: reviewIds } },
+  })
+
+  reviews.forEach(rev => {
+    revalidatePath(`/product/${rev.productId}`)
+  })
+  revalidatePath('/admin')
+}
