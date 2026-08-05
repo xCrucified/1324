@@ -1,6 +1,8 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Google from "next-auth/providers/google";
+import Credentials from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -45,13 +47,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role || "user";
+        // Використовуємо (user as any), щоб TypeScript не сварився на кастомне поле role
+        token.role = (user as any).role || "user";
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user && token.role) {
-        session.user.role = token.role as string;
+        // Аналогічно для session.user
+        (session.user as any).role = token.role as string;
       }
       return session;
     },
