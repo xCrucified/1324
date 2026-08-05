@@ -1,12 +1,31 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
+// Спеціальний клас помилки для NextAuth v5, щоб текст доходив до клієнта
+class CustomAuthError extends CredentialsSignin {
+  constructor(message: string) {
+    super();
+    this.message = message;
+    // Передаємо текст у код, щоб він зчитався на клієнті через res.code
+    (this as any).code = message;
+  }
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // Залишаємо адаптер тільки якщо він коректно створений у Prisma, 
+  // але для чистих Credentials краще робити через JWT. 
+  // Якщо виникають помилки конфігурації з адаптером, його можна тимчасово закоментувати.
   adapter: PrismaAdapter(prisma),
+  session: {
+    strategy: "jwt",
+  },
+  pages: {
+    signIn: "/login", // шлях до вашої сторінки логіну
+  },
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -17,14 +36,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
-        code: { label: "Code", type: "text" } // Додано поле для коду підтвердження
+        code: { label: "Code", type: "text" }
       },
       async authorize(credentials) {
         if (!credentials?.email) {
-          throw new Error("Введіть email");
+          throw new CustomAuthError("Введіть email");
         }
 
-        // Нормалізація email для точного пошуку
         const email = (credentials.email as string).trim().toLowerCase();
 
         const user = await prisma.user.findUnique({
@@ -32,22 +50,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
 
         if (!user) {
-          throw new Error("Користувача не знайдено");
+          throw new CustomAuthError("Користувача не знайдено");
         }
 
-        // === СЦЕНАРІЙ 1: Підтвердження входу/реєстрації за кодом ===
+        // === СЦЕНАРІЙ 1: Підтвердження за кодом ===
         if (credentials.code) {
           const inputCode = credentials.code as string;
           
           if (user.verificationCode !== inputCode) {
-            throw new Error("Невірний код підтвердження");
+            throw new CustomAuthError("Невірний код підтвердження");
           }
           
           if (user.codeExpires && new Date() > new Date(user.codeExpires)) {
-            throw new Error("Термін дії коду вичерпано");
+            throw new CustomAuthError("Термін дії коду вичерпано");
           }
 
-          // Очищаємо код після успішного підтвердження
           await prisma.user.update({
             where: { id: user.id },
             data: {
@@ -60,38 +77,37 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return user;
         }
 
-        // === СЦЕНАРІЙ 2: Звичайний вхід за паролем ===
+        // === СЦЕНАРІЙ 2: Вхід за паролем ===
         if (credentials.password) {
           if (!user.password) {
-            throw new Error("Цей акаунт зареєстровано через Google. Увійдіть через Google.");
+            throw new CustomAuthError("Цей акаунт зареєстровано через Google. Увійдіть через Google.");
           }
 
           const isValid = await bcrypt.compare(credentials.password as string, user.password);
 
           if (!isValid) {
-            throw new Error("Невірний пароль");
+            throw new CustomAuthError("Невірний пароль");
           }
 
           return user;
         }
 
-        throw new Error("Введіть пароль або код підтвердження");
+        throw new CustomAuthError("Введіть пароль або код підтвердження");
       }
     })
   ],
-  session: {
-    strategy: "jwt",
-  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.role = (user as any).role || "user";
+        token.id = user.id;
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user && token.role) {
+      if (session.user) {
         (session.user as any).role = token.role as string;
+        (session.user as any).id = token.id as string;
       }
       return session;
     },

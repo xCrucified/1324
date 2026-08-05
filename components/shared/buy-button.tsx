@@ -157,12 +157,10 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
 
     setLoading(true);
 
-    // Контролер таймауту на 15 секунд, щоб запит не висів вічно
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
-      // Зберігаємо поточну адресу в localStorage для зручності
       const newAddress = {
         id: Date.now().toString(),
         addressName: `${city}, ${warehouse.slice(0, 25)}...`,
@@ -214,7 +212,6 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
 
       clearTimeout(timeoutId);
 
-      // Безпечне читання відповіді (якщо сервер поверне HTML помилку)
       const textResponse = await response.text();
       let result;
       try {
@@ -248,42 +245,41 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
         alert(error.message || 'Помилка з’єднання з сервером оплати');
       }
     } finally {
-      // ЗАВЖДИ знімає завантаження (навіть якщо сталася помилка)
       setLoading(false);
     }
   };
 
   return (
     <>
-      <div className="w-full max-w-md bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-5 space-y-5">
-          <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-100">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-5 space-y-4">
+          <div className="flex justify-between items-center bg-gray-50/80 p-4 rounded-xl border border-gray-100">
             <div>
-              <p className="text-sm text-gray-500 font-medium mb-1">До сплати:</p>
+              <p className="text-xs text-gray-500 font-medium mb-0.5">До сплати:</p>
               <div className="text-2xl font-bold text-gray-900">{priceInUah} ₴</div>
             </div>
             <div className="text-right flex flex-col items-end">
-              <span className="text-xs font-semibold text-gray-700 bg-white border border-gray-200 px-2.5 py-1 rounded shadow-xs">
-                Secure Checkout
+              <span className="text-[11px] font-semibold text-gray-700 bg-white border border-gray-200/80 px-2.5 py-1 rounded-full shadow-2xs flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-orange-500" /> Secure Checkout
               </span>
             </div>
           </div>
 
-          <div className="bg-blue-50/50 rounded-lg p-3.5 text-sm text-gray-600 space-y-2.5 border border-blue-50">
+          <div className="bg-orange-50/50 rounded-xl p-3.5 text-xs text-gray-600 space-y-2 border border-orange-100/60">
             <div className="flex items-start gap-2.5">
-              <ShieldCheck className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
-              <p className="leading-tight text-xs">Безпечна та захищена оплата через Monobank.</p>
+              <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+              <p className="leading-tight">Безпечна та захищена оплата через Monobank.</p>
             </div>
             <div className="flex items-start gap-2.5">
-              <CreditCard className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-              <p className="leading-tight text-xs">Швидка доставка Новою Поштою.</p>
+              <CreditCard className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
+              <p className="leading-tight">Швидка доставка Новою Поштою.</p>
             </div>
           </div>
 
           <button
             onClick={handleOpenCheckout}
             type="button"
-            className="w-full bg-[#0066FF] hover:bg-blue-700 text-white font-medium py-3.5 px-6 rounded-lg transition-all shadow-md hover:shadow-lg flex justify-center items-center gap-2 text-sm cursor-pointer"
+            className="w-full bg-orange-500 hover:bg-orange-600 active:scale-[0.99] text-white font-semibold py-3.5 px-6 rounded-xl transition-all shadow-md shadow-orange-500/15 flex justify-center items-center gap-2 text-sm cursor-pointer"
           >
             <Lock className="w-4 h-4" />
             Купити товар
@@ -291,30 +287,33 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
         </div>
       </div>
 
-      {/* Модалка оформлення замовлення */}
       {showCheckoutModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 space-y-5 relative my-8 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-5 relative my-8 animate-in fade-in zoom-in-95 duration-200 border border-gray-100">
             <button
               onClick={() => setShowCheckoutModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer p-1 rounded-lg hover:bg-gray-100"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div>
               <h3 className="text-xl font-bold text-gray-900">Оформлення замовлення</h3>
-              <p className="text-xs text-gray-500 mt-1">{title} — <span className="font-semibold text-gray-800">{priceInUah} ₴</span></p>
+              <p className="text-xs text-gray-500 mt-1">
+                {title} — <span className="font-semibold text-orange-500">{priceInUah} ₴</span>
+              </p>
             </div>
 
             {isChoosingAddress ? (
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <h4 className="text-sm font-semibold text-gray-800">Оберіть збережену адресу:</h4>
+                  <h4 className="text-xs font-semibold text-gray-800 uppercase tracking-wider">
+                    Оберіть збережену адресу:
+                  </h4>
                   <button
                     type="button"
                     onClick={() => setIsChoosingAddress(false)}
-                    className="text-xs text-blue-600 hover:underline cursor-pointer flex items-center gap-1"
+                    className="text-xs font-medium text-orange-500 hover:text-orange-600 transition cursor-pointer flex items-center gap-1"
                   >
                     <Plus className="w-3.5 h-3.5" /> Нова адреса
                   </button>
@@ -325,14 +324,16 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
                     <div
                       key={addr.id || addr.addressName}
                       onClick={() => handleSelectSavedAddress(addr)}
-                      className="border border-gray-200 hover:border-blue-500 bg-gray-50/50 hover:bg-blue-50/30 p-3.5 rounded-xl cursor-pointer transition-all space-y-1.5"
+                      className="border border-gray-200 hover:border-orange-500 bg-gray-50/50 hover:bg-orange-50/20 p-3.5 rounded-xl cursor-pointer transition-all space-y-1.5 group"
                     >
                       <div className="flex justify-between items-center">
-                        <span className="font-bold text-xs text-gray-900 flex items-center gap-1.5">
-                          <MapPin className="w-3.5 h-3.5 text-blue-600" />
+                        <span className="font-semibold text-xs text-gray-900 flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-orange-500" />
                           {addr.addressName || 'Адреса'}
                         </span>
-                        <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">Вибрати</span>
+                        <span className="text-[10px] bg-orange-100 text-orange-700 px-2.5 py-0.5 rounded-full font-semibold group-hover:bg-orange-500 group-hover:text-white transition">
+                          Вибрати
+                        </span>
                       </div>
                       <p className="text-xs text-gray-700">{addr.firstName} {addr.lastName} ({addr.phone})</p>
                       <p className="text-xs text-gray-500">{addr.city}, {addr.warehouse}</p>
@@ -346,7 +347,7 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
                   <button
                     type="button"
                     onClick={() => setIsChoosingAddress(true)}
-                    className="text-xs text-blue-600 hover:underline cursor-pointer block mb-1"
+                    className="text-xs font-medium text-orange-500 hover:underline cursor-pointer block mb-1"
                   >
                     ← Обрати зі збережених адрес
                   </button>
@@ -360,7 +361,7 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
                       required
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:bg-white outline-none text-gray-900"
+                      className="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-xs focus:border-orange-500 focus:bg-white outline-none transition text-gray-900"
                       placeholder="Ім'я"
                     />
                   </div>
@@ -371,7 +372,7 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
                       required
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:bg-white outline-none text-gray-900"
+                      className="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-xs focus:border-orange-500 focus:bg-white outline-none transition text-gray-900"
                       placeholder="Прізвище"
                     />
                   </div>
@@ -385,7 +386,7 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:bg-white outline-none text-gray-900"
+                      className="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-xs focus:border-orange-500 focus:bg-white outline-none transition text-gray-900"
                       placeholder="mail@gmail.com"
                     />
                   </div>
@@ -396,7 +397,7 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
                       required
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:bg-white outline-none text-gray-900"
+                      className="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-xs focus:border-orange-500 focus:bg-white outline-none transition text-gray-900"
                       placeholder="+380..."
                     />
                   </div>
@@ -414,16 +415,16 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
                         setShowCities(true);
                       }}
                       onFocus={() => setShowCities(true)}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:bg-white outline-none text-gray-900"
+                      className="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-xs focus:border-orange-500 focus:bg-white outline-none transition text-gray-900"
                       placeholder="Введіть місто..."
                     />
                     {showCities && cities.length > 0 && (
-                      <ul className="absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-44 overflow-y-auto">
+                      <ul className="absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-44 overflow-y-auto">
                         {cities.map((item) => (
                           <li
                             key={item.ref}
                             onClick={() => handleCitySelect(item)}
-                            className="p-2 text-xs hover:bg-gray-100 cursor-pointer text-gray-800 border-b border-gray-100 last:border-none"
+                            className="p-2.5 text-xs hover:bg-orange-50 hover:text-orange-600 cursor-pointer text-gray-800 border-b border-gray-100 last:border-none transition"
                           >
                             {item.name}
                           </li>
@@ -439,7 +440,7 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
                       disabled={!cityRef || loadingWarehouses}
                       value={warehouse}
                       onChange={(e) => setWarehouse(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:bg-white outline-none text-gray-900 disabled:opacity-50"
+                      className="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-xs focus:border-orange-500 focus:bg-white outline-none transition text-gray-900 disabled:opacity-50 cursor-pointer"
                     >
                       <option value="" disabled>
                         {loadingWarehouses ? 'Завантаження...' : 'Оберіть відділення'}
@@ -457,7 +458,7 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-[#0066FF] hover:bg-blue-700 text-white font-medium py-3.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2 text-sm cursor-pointer"
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3.5 px-6 rounded-xl transition-all shadow-md shadow-orange-500/15 disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2 text-sm cursor-pointer"
                   >
                     {loading ? (
                       <>
@@ -483,35 +484,35 @@ export default function BuyButton({ productId, priceInUah, title }: BuyButtonPro
       )}
 
       {showAuthModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-5 relative animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-5 relative animate-in fade-in zoom-in-95 duration-200 border border-gray-100">
             <button
               onClick={() => setShowAuthModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer p-1 rounded-lg hover:bg-gray-100"
             >
-              <X className="w-5 h-5`" />
+              <X className="w-5 h-5" />
             </button>
 
             <div className="flex flex-col items-center text-center space-y-3">
-              <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+              <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500">
                 <UserCheck className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-bold text-gray-900">Потрібна авторизація</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                Щоб оформити замовлення та відстежувати його статус, будь ласка, увійдіть до свого облікового запису.
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Щоб оформити замовлення та відстежувати його статус, будь ласка, увійдіть до свого облікового запису Pentu24.
               </p>
             </div>
 
-            <div className="space-y-2.5 pt-2">
+            <div className="space-y-2.5 pt-1">
               <button
                 onClick={() => router.push('/login')}
-                className="w-full bg-[#0066FF] hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl transition-all shadow-sm text-sm cursor-pointer"
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-xl transition-all shadow-md shadow-orange-500/15 text-xs cursor-pointer"
               >
                 Увійти в систему
               </button>
               <button
                 onClick={() => setShowAuthModal(false)}
-                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-4 rounded-xl transition-all text-sm cursor-pointer"
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-4 rounded-xl transition-all text-xs cursor-pointer"
               >
                 Скасувати
               </button>

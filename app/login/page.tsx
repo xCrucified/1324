@@ -10,14 +10,14 @@ type Step = "login" | "forgot_email" | "forgot_code" | "reset_password";
 export default function LoginPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("login");
-  
+
   // Дані форми
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  
+
   // Стани UI
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -39,7 +39,14 @@ export default function LoginPage() {
       });
 
       if (res?.error) {
-        setError(res.error || "Невірний email або пароль");
+        // У NextAuth v5 текст або код помилки передається через res.code / res.error
+        const customError = res.code || res.error;
+
+        if (customError === "Configuration" || customError === "CredentialsSignin") {
+          setError("Невірний email або пароль");
+        } else {
+          setError(customError);
+        }
         setLoading(false);
         return;
       }
