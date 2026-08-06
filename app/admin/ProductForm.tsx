@@ -1,10 +1,51 @@
 'use client'
 
-import { useState, useRef, ClipboardEvent, ChangeEvent } from 'react'
+import React, { useState, useRef, ClipboardEvent, ChangeEvent } from 'react'
 
 interface ProductFormProps {
   action: (formData: FormData) => Promise<void>
 }
+
+const CATEGORY_TREE = [
+  {
+    id: 'clothing',
+    name: '👗 Одяг та Взуття',
+    subcategories: [
+      { id: 'clothing-women', name: 'Жіночий одяг' },
+      { id: 'clothing-men', name: 'Чоловічий одяг' },
+      { id: 'clothing-kids', name: 'Дитячий одяг' },
+      { id: 'clothing-sleep', name: 'Піжами' },
+      { id: 'clothing-sport', name: 'Спортивні костюми' },
+      { id: 'clothing-shoes', name: 'Взуття' },
+      { id: 'clothing-other', name: 'Інше' },
+    ],
+  },
+  {
+    id: 'accessories',
+    name: '🎒 Аксесуари',
+    subcategories: [
+      { id: 'acc-bags', name: 'Сумки та барсетки' },
+      { id: 'acc-backpacks', name: 'Рюкзаки' },
+      { id: 'acc-jewelry', name: 'Біжутерія' },
+      { id: 'acc-hair', name: 'Аксесуари для волосся' },
+      { id: 'acc-smart', name: 'Смарт-годинники та браслети' },
+      { id: 'acc-glasses', name: 'Окуляри' },
+      { id: 'acc-other', name: 'Інше' },
+    ],
+  },
+  {
+    id: 'home',
+    name: '🏠 Товари для дому',
+    subcategories: [
+      { id: 'home-organizers', name: 'Органайзери' },
+      { id: 'home-smart-gadgets', name: 'Міні-гаджети' },
+      { id: 'home-kitchen', name: 'Кухонне приладдя та посуд' },
+      { id: 'home-decor', name: 'Декор' },
+      { id: 'home-textile', name: 'Текстиль' },
+      { id: 'home-other', name: 'Інше' },
+    ],
+  },
+]
 
 export default function ProductForm({ action }: ProductFormProps) {
   const [previews, setPreviews] = useState<string[]>([])
@@ -100,6 +141,33 @@ export default function ProductForm({ action }: ProductFormProps) {
             className="w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/5"
           />
         </div>
+      </div>
+
+      {/* НОВЕ ПОЛЕ: Вибір категорії */}
+      <div>
+        <label htmlFor="categoryId" className="block text-sm font-medium mb-1">
+          Категорія товару
+        </label>
+        <select
+          id="categoryId"
+          name="categoryId"
+          defaultValue=""
+          className="w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/5 bg-white"
+        >
+          <option value="">-- Без категорії --</option>
+          {CATEGORY_TREE.map((category) => (
+            <React.Fragment key={category.id}>
+              <option value={category.id} className="font-bold">
+                {category.name}
+              </option>
+              {category.subcategories.map((sub) => (
+                <option key={sub.id} value={sub.id}>
+                  &nbsp;&nbsp;&nbsp;↳ {sub.name}
+                </option>
+              ))}
+            </React.Fragment>
+          ))}
+        </select>
       </div>
 
       <div>

@@ -11,7 +11,7 @@ model User {
   id               String    @id @default(cuid())
   name             String?
   email            String?   @unique
-  password         String?    
+  password         String?  
   termsAccepted    Boolean   @default(false)
   role             String    @default("user") 
   emailVerified    DateTime?
@@ -69,8 +69,10 @@ model Product {
   description String?     @db.Text
   image       String?
   images      String[]
+  
+  // Зв'язок вимкнено, тепер це просто текстове поле для збереження ID категорії з вашого хардкод-списку
   categoryId  String?
-  category    Category?   @relation(fields: [categoryId], references: [id])
+  
   orderItems  OrderItem[]
   favorites   Favorite[]
   reviews     Review[]    // Зв'язок з відгуками
@@ -82,7 +84,7 @@ model Category {
   id       String    @id @default(cuid())
   name     String    @unique
   slug     String    @unique
-  products Product[]
+  // products Product[]  <-- Цей рядок також видалено, бо зв'язку з товарами більше немає
 }
 
 model Order {

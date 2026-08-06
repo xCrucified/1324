@@ -22,28 +22,28 @@ export default async function Page({ searchParams }: PageProps) {
     selectedCategory !== "Sellers"
   ) {
     whereClause = {
-      category: {
-        name: selectedCategory,
-      },
+      categoryId: selectedCategory,
     };
   }
 
   // 3. Завантажуємо товари з бази даних
   const products = await prisma.product.findMany({
     where: whereClause,
-    include: {
-      category: true,
-    },
     orderBy: {
       createdAt: "desc",
     },
   });
 
+  const formattedProducts = products.map((product) => ({
+    ...product,
+    category: null,
+  }));
+
   return (
     <>
       <TopBar />
       <Header />
-      <Main initialProducts={products} selectedCategory={selectedCategory} />
+      <Main initialProducts={formattedProducts as any} selectedCategory={selectedCategory} />
       <Footer />
     </>
   );

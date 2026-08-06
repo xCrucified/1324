@@ -300,6 +300,8 @@ export async function updateProduct(id: string, formData: FormData) {
   const price = parseFloat(formData.get('price') as string)
   const description = formData.get('description') as string
   const image = formData.get('image') as string
+  // Зчитуємо категорію з форми редагування
+  const categoryId = (formData.get('categoryId') as string) || null
 
   const rawImages = formData.get('images') as string
   const images = rawImages
@@ -314,10 +316,12 @@ export async function updateProduct(id: string, formData: FormData) {
       description,
       image: image || (images[0] ?? ''),
       images,
+      categoryId, // Додано збереження категорії в БД
     },
   })
 
   revalidatePath('/admin')
+  revalidatePath('/store')
   revalidatePath(`/admin/edit/${id}`)
   redirect('/admin')
 }
@@ -325,6 +329,7 @@ export async function updateProduct(id: string, formData: FormData) {
 export async function deleteProduct(id: string) {
   await prisma.product.delete({ where: { id } })
   revalidatePath('/admin')
+  revalidatePath('/store')
 }
 
 export async function deleteProducts(ids: string[]) {
@@ -333,6 +338,7 @@ export async function deleteProducts(ids: string[]) {
     where: { id: { in: ids } },
   })
   revalidatePath('/admin')
+  revalidatePath('/store')
 }
 
 export async function deleteOrder(id: string) {
@@ -361,7 +367,6 @@ export async function updateOrderStatus(orderId: string, status: string) {
   }
 }
 
-// Додано екшени для видалення відгуків:
 export async function deleteReview(reviewId: string) {
   if (process.env.NODE_ENV !== 'development') {
     throw new Error('Дія заборонена')

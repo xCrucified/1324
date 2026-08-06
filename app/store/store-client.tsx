@@ -15,15 +15,60 @@ interface Product {
 
 interface Props {
   initialProducts: Product[];
+  initialCategory?: string;
 }
 
-export default function StoreClient({ initialProducts }: Props) {
+const CATEGORY_TREE = [
+  {
+    id: 'clothing',
+    name: '👗 Одяг та Взуття',
+    subcategories: [
+      { id: 'clothing-women', name: 'Жіночий одяг' },
+      { id: 'clothing-men', name: 'Чоловічий одяг' },
+      { id: 'clothing-kids', name: 'Дитячий одяг' },
+      { id: 'clothing-sleep', name: 'Піжами' },
+      { id: 'clothing-sport', name: 'Спортивні костюми' },
+      { id: 'clothing-shoes', name: 'Взуття' },
+      { id: 'clothing-other', name: 'Інше' },
+    ],
+  },
+  {
+    id: 'accessories',
+    name: '🎒 Аксесуари',
+    subcategories: [
+      { id: 'acc-bags', name: 'Сумки та барсетки' },
+      { id: 'acc-backpacks', name: 'Рюкзаки' },
+      { id: 'acc-jewelry', name: 'Біжутерія' },
+      { id: 'acc-[#hair]', name: 'Аксесуари для волосся' },
+      { id: 'acc-smart', name: 'Смарт-годинники та браслети' },
+      { id: 'acc-glasses', name: 'Окуляри' },
+      { id: 'acc-other', name: 'Інше' },
+    ],
+  },
+  {
+    id: 'home',
+    name: '🏠 Товари для дому',
+    subcategories: [
+      { id: 'home-organizers', name: 'Органайзери' },
+      { id: 'home-smart-gadgets', name: 'Міні-гаджети' },
+      { id: 'home-kitchen', name: 'Кухонне приладдя та посуд' },
+      { id: 'home-decor', name: 'Декор' },
+      { id: 'home-textile', name: 'Текстиль' },
+      { id: 'home-other', name: 'Інше' },
+    ],
+  },
+];
+
+export default function StoreClient({ initialProducts, initialCategory }: Props) {
   const { savedItems, toggleSave, addToCart } = useShopStore();
+
+  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory || 'all');
   
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  // Стан для згортання/розгортання категорій
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
   const defaultMaxPrice = useMemo(() => {
-    if (initialProducts.length === 0) return 20000;
+    if (!initialProducts || initialProducts.length === 0) return 20000;
     const max = Math.max(...initialProducts.map((p) => p.price));
     return Math.ceil(max / 1000) * 1000 || 20000;
   }, [initialProducts]);
@@ -33,17 +78,27 @@ export default function StoreClient({ initialProducts }: Props) {
 
   const [sortOrder, setSortOrder] = useState<'default' | 'asc' | 'desc'>('default');
 
-  const categories = useMemo(() => {
-    const cats = initialProducts
-      .map((p) => p.categoryId)
-      .filter(Boolean) as string[];
-    return ['all', ...Array.from(new Set(cats))];
-  }, [initialProducts]);
+  const getCategoryIdsToMatch = (selected: string) => {
+    if (selected === 'all') return [];
+    
+    const parentCategory = CATEGORY_TREE.find(c => c.id === selected);
+    if (parentCategory) {
+      const subIds = parentCategory.subcategories.map(s => s.id);
+      return [parentCategory.id, ...subIds];
+    }
+    
+    return [selected];
+  };
 
   const filteredProducts = useMemo(() => {
-    return initialProducts
+    const validCategoryIds = getCategoryIdsToMatch(selectedCategory);
+
+    return (initialProducts || [])
       .filter((p) => {
-        const matchesCategory = selectedCategory === 'all' || p.categoryId === selectedCategory;
+        const matchesCategory = 
+          selectedCategory === 'all' || 
+          (p.categoryId && validCategoryIds.includes(p.categoryId));
+          
         const matchesPrice = p.price >= minPrice && p.price <= maxPrice;
 
         return matchesCategory && matchesPrice;
@@ -60,6 +115,12 @@ export default function StoreClient({ initialProducts }: Props) {
     setMinPrice(0);
     setMaxPrice(defaultMaxPrice);
     setSortOrder('default');
+  };
+
+  const toggleCategory = (id: string) => {
+    setExpandedCategories((prev) =>
+      prev.includes(id) ? prev.filter((catId) => catId !== id) : [...prev, id]
+    );
   };
 
   return (
@@ -79,23 +140,17 @@ export default function StoreClient({ initialProducts }: Props) {
 
         <div>
           <label className="block text-xs font-semibold text-oak mb-2">
-            Категорія / Тип
+            Сортування
           </label>
-          <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto pr-1">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`text-left px-3 py-1.5 rounded text-xs transition-colors ${
-                  selectedCategory === cat
-                    ? 'bg-bark text-cream font-medium'
-                    : 'bg-ivory text-bark hover:bg-parchment'
-                }`}
-              >
-                {cat === 'all' ? '📦 Усі категорії' : cat}
-              </button>
-            ))}
-          </div>
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as 'default' | 'asc' | 'desc')}
+            className="w-full border border-parchment rounded p-2 text-xs bg-ivory text-bark focus:outline-none focus:ring-1 focus:ring-bark"
+          >
+            <option value="default">За замовчуванням</option>
+            <option value="asc">Від дешевих до дорогих</option>
+            <option value="desc">Від дорогих до дешевих</option>
+          </select>
         </div>
 
         <div>
@@ -141,8 +196,8 @@ export default function StoreClient({ initialProducts }: Props) {
             <div
               className="absolute h-1 bg-bark rounded-sm pointer-events-none"
               style={{
-                left: `${(minPrice / defaultMaxPrice) * 100}%`,
-                right: `${100 - (maxPrice / defaultMaxPrice) * 100}%`,
+                left: `${defaultMaxPrice > 0 ? (minPrice / defaultMaxPrice) * 100 : 0}%`,
+                right: `${defaultMaxPrice > 0 ? 100 - (maxPrice / defaultMaxPrice) * 100 : 0}%`,
               }}
             />
 
@@ -175,18 +230,73 @@ export default function StoreClient({ initialProducts }: Props) {
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-oak mb-2">
-            Сортування
+          <label className="block text-xs font-semibold text-oak mb-3">
+            Категорія / Тип
           </label>
-          <select
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value as any)}
-            className="w-full border border-parchment rounded p-2 text-xs bg-ivory text-bark focus:outline-none focus:ring-1 focus:ring-bark"
-          >
-            <option value="default">За замовчуванням</option>
-            <option value="asc">Від дешевих до дорогих</option>
-            <option value="desc">Від дорогих до дешевих</option>
-          </select>
+          <div className="flex flex-col gap-1 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+            <button
+              onClick={() => setSelectedCategory('all')}
+              className={`text-left px-3 py-2 rounded text-xs transition-colors mb-2 font-medium ${
+                selectedCategory === 'all'
+                  ? 'bg-bark text-cream'
+                  : 'bg-ivory text-bark hover:bg-parchment'
+              }`}
+            >
+              📦 Усі категорії
+            </button>
+
+            {CATEGORY_TREE.map((category) => {
+              const isExpanded = expandedCategories.includes(category.id);
+              
+              return (
+                <div key={category.id} className="mb-2">
+                  <div className={`flex items-center justify-between rounded text-xs transition-colors ${
+                      selectedCategory === category.id
+                        ? 'bg-bark text-cream'
+                        : 'text-bark hover:bg-parchment'
+                    }`}>
+                    <button
+                      onClick={() => setSelectedCategory(category.id)}
+                      className="flex-1 text-left px-3 py-1.5 font-semibold"
+                    >
+                      {category.name}
+                    </button>
+                    <button
+                      onClick={() => toggleCategory(category.id)}
+                      className="px-3 py-1.5 text-inherit opacity-70 hover:opacity-100 transition-opacity"
+                    >
+                      <svg 
+                        className={`w-3.5 h-3.5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  {isExpanded && (
+                    <div className="flex flex-col gap-0.5 mt-1 ml-4 border-l border-parchment pl-2">
+                      {category.subcategories.map((sub) => (
+                        <button
+                          key={sub.id}
+                          onClick={() => setSelectedCategory(sub.id)}
+                          className={`text-left px-2 py-1.5 rounded text-xs transition-colors ${
+                            selectedCategory === sub.id
+                              ? 'bg-caramel/20 text-caramel font-medium'
+                              : 'text-oak hover:bg-ivory hover:text-bark'
+                          }`}
+                        >
+                          {sub.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </aside>
 
@@ -199,7 +309,7 @@ export default function StoreClient({ initialProducts }: Props) {
 
         {filteredProducts.length === 0 ? (
           <div className="bg-white border border-parchment rounded p-12 text-center text-oak text-sm">
-            За вашим запитом товари не знайдені. Спробуйте змінити фільтри.
+            За вашим запитом товари не знайдені. Спробуйте змінити категорію або ціну.
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">

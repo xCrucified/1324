@@ -14,6 +14,10 @@ async function handleCreateProduct(formData: FormData) {
     const price = parseFloat(formData.get('price') as string) || 0
     const description = (formData.get('description') as string) || ''
     const sourceUrl = (formData.get('sourceUrl') as string) || ''
+    
+    // ВАЖЛИВЕ ВИПРАВЛЕННЯ: Надійно обробляємо порожній рядок
+    const rawCategoryId = formData.get('categoryId') as string | null
+    const categoryId = rawCategoryId && rawCategoryId.trim() !== '' ? rawCategoryId.trim() : null
 
     const images: string[] = []
 
@@ -84,6 +88,7 @@ async function handleCreateProduct(formData: FormData) {
         description: fullDescription.trim(),
         image: mainImage,
         images: images.length > 0 ? images : [mainImage],
+        categoryId, // Зберігаємо категорію (тепер це або валідний ID, або null)
       },
     })
 

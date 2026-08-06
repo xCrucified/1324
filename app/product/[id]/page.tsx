@@ -13,6 +13,57 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
+const CATEGORY_TREE = [
+  {
+    id: 'clothing',
+    name: '👗 Одяг та Взуття',
+    subcategories: [
+      { id: 'clothing-women', name: 'Жіночий одяг' },
+      { id: 'clothing-men', name: 'Чоловічий одяг' },
+      { id: 'clothing-kids', name: 'Дитячий одяг' },
+      { id: 'clothing-sleep', name: 'Піжами' },
+      { id: 'clothing-sport', name: 'Спортивні костюми' },
+      { id: 'clothing-shoes', name: 'Взуття' },
+      { id: 'clothing-other', name: 'Інше' },
+    ],
+  },
+  {
+    id: 'accessories',
+    name: '🎒 Аксесуари',
+    subcategories: [
+      { id: 'acc-bags', name: 'Сумки та барсетки' },
+      { id: 'acc-backpacks', name: 'Рюкзаки' },
+      { id: 'acc-jewelry', name: 'Біжутерія' },
+      { id: 'acc-hair', name: 'Аксесуари для волосся' },
+      { id: 'acc-smart', name: 'Смарт-годинники та браслети' },
+      { id: 'acc-glasses', name: 'Окуляри' },
+      { id: 'acc-other', name: 'Інше' },
+    ],
+  },
+  {
+    id: 'home',
+    name: '🏠 Товари для дому',
+    subcategories: [
+      { id: 'home-organizers', name: 'Органайзери' },
+      { id: 'home-smart-gadgets', name: 'Міні-гаджети' },
+      { id: 'home-kitchen', name: 'Кухонне приладдя та посуд' },
+      { id: 'home-decor', name: 'Декор' },
+      { id: 'home-textile', name: 'Текстиль' },
+      { id: 'home-other', name: 'Інше' },
+    ],
+  },
+];
+
+function getCategoryDetails(catId?: string | null): { name: string; id: string } | null {
+  if (!catId) return null;
+  for (const parent of CATEGORY_TREE) {
+    if (parent.id === catId) return { name: parent.name, id: parent.id };
+    const sub = parent.subcategories.find((s) => s.id === catId);
+    if (sub) return { name: `${parent.name} → ${sub.name}`, id: sub.id };
+  }
+  return { name: catId, id: catId };
+}
+
 export default async function ProductPage({ params }: Props) {
   const { id } = await params;
 
@@ -21,7 +72,6 @@ export default async function ProductPage({ params }: Props) {
   const product = await prisma.product.findUnique({
     where: { id },
     include: {
-      category: true,
       reviews: {
         include: {
           user: true,
@@ -37,6 +87,8 @@ export default async function ProductPage({ params }: Props) {
     return notFound();
   }
 
+  const categoryInfo = getCategoryDetails(product.categoryId);
+
   const allImages = [
     ...(product.images && product.images.length > 0 ? product.images : []),
     ...(product.image && (!product.images || !product.images.includes(product.image)) ? [product.image] : []),
@@ -51,10 +103,10 @@ export default async function ProductPage({ params }: Props) {
         <div className="flex items-center gap-2 text-xs text-oak font-body mb-6">
           <Link href="/" className="hover:text-bark">Головна</Link>
           <span>/</span>
-          {product.category && (
+          {categoryInfo && (
             <>
-              <Link href={`/?category=${encodeURIComponent(product.category.name)}`} className="hover:text-bark">
-                {product.category.name}
+              <Link href={`/?category=${encodeURIComponent(categoryInfo.id)}`} className="hover:text-bark">
+                {categoryInfo.name}
               </Link>
               <span>/</span>
             </>

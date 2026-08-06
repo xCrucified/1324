@@ -19,10 +19,10 @@ import { cn } from "@/lib/utils";
 import { useShopStore } from "@/store/use-shop";
 import { Prisma } from "@prisma/client";
 
-// Автоматичне виведення точного типу продукту з Prisma
-export type PrismaProductWithCategory = Prisma.ProductGetPayload<{
-  include: { category: true };
-}>;
+// Безпечне виведення типу продукту з Prisma без жорсткої прив'язки до relation category
+export type PrismaProductWithCategory = Prisma.ProductGetPayload<{}> & {
+  category?: any;
+};
 
 export type UIProduct = {
   id: string;
@@ -67,6 +67,8 @@ export const Main: React.FC<Props> = ({
   }, []);
 
   const catalog: UIProduct[] = useMemo(() => {
+    if (!initialProducts || !Array.isArray(initialProducts)) return [];
+
     return initialProducts.map((p) => {
       // Перевіряємо поля title / name безпечним способом
       const displayTitle =
