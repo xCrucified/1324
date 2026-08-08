@@ -43,12 +43,14 @@ export type UIProduct = {
 interface Props {
   className?: string;
   selectedCategory?: string;
+  categoryTitle?: string; // Додано проп для гарної української назви
   initialProducts: PrismaProductWithCategory[];
 }
 
 export const Main: React.FC<Props> = ({
   className,
   selectedCategory = "Home",
+  categoryTitle,
   initialProducts,
 }) => {
   const [toastVisible, setToastVisible] = useState(false);
@@ -203,7 +205,7 @@ export const Main: React.FC<Props> = ({
               <h1 className="font-display font-bold text-xl text-bark">
                 {query.trim()
                   ? `Результати пошуку для "${query}"`
-                  : selectedCategory}
+                  : categoryTitle || selectedCategory}
               </h1>
               <span className="font-body text-oak text-xs">
                 Знайдено: {filtered.length}

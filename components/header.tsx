@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useShopStore } from "@/store/use-shop";
 import { getOrders } from "@/app/actions";
+import { CATEGORY_TREE } from "@/constants/categories";
 import CartModal from "./shared/cart-modal";
 import SavedModal from "./shared/saved-modal";
 import OrdersModal from "./shared/orders-modal";
@@ -14,8 +15,6 @@ import ProfileModal from "./shared/profile-modal";
 interface Props {
   className?: string;
 }
-
-const CATEGORIES = [{ label: "Кераміка", icon: "🏺", count: "2.4k товарів" }];
 
 export const Header: React.FC<Props> = ({ className }) => {
   const [searchActive, setSearchActive] = useState(false);
@@ -28,7 +27,7 @@ export const Header: React.FC<Props> = ({ className }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const currentCategory = searchParams.get("category") || "Головна";
+  const currentCategory = searchParams.get("category") || "Home";
 
   const { items, savedItems, query, setQuery } = useShopStore();
   const cartCount = items.reduce((total, item) => total + item.quantity, 0);
@@ -80,9 +79,11 @@ export const Header: React.FC<Props> = ({ className }) => {
               className="bg-parchment border-r border-oak text-bark font-body px-3 py-2.5 text-xs outline-none shrink-0 hidden sm:block"
               style={{ minWidth: 125 }}
             >
-              <option>Усі категорії</option>
-              {CATEGORIES.map((c) => (
-                <option key={c.label}>{c.label}</option>
+              <option value="">Усі категорії</option>
+              {CATEGORY_TREE.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
               ))}
             </select>
             <input
@@ -252,16 +253,13 @@ export const Header: React.FC<Props> = ({ className }) => {
         >
           <div className="max-w-7xl mx-auto px-4 flex gap-0">
             {[
-              { label: "Головна", key: "Головна" },
-              ...CATEGORIES,
-              // { label: "Швидкі знижки", key: "Flash Sale" },
-              // { label: "Нові надходження", key: "New Arrivals" },
-              // { label: "Продавці", key: "Sellers" },
+              { label: "Головна", key: "Home" },
+              ...CATEGORY_TREE.map((cat) => ({ label: cat.name, key: cat.id })),
             ].map((itemObj) => {
               const itemLabel = itemObj.label;
-              const itemKey = "key" in itemObj ? itemObj.key : itemObj.label;
+              const itemKey = itemObj.key;
               const href =
-                itemKey === "Головна"
+                itemKey === "Home"
                   ? "/"
                   : `/?category=${encodeURIComponent(itemKey)}`;
               const isActive = currentCategory === itemKey;
@@ -273,13 +271,11 @@ export const Header: React.FC<Props> = ({ className }) => {
                   className={`font-body whitespace-nowrap px-4 py-2 text-xs transition-colors border-b-2 inline-block ${
                     isActive
                       ? "border-amber text-amber font-bold"
-                      : itemKey === "Flash Sale"
-                        ? "border-transparent text-amber font-bold hover:text-amber/80"
-                        : "border-transparent text-bark hover:text-oak hover:border-oak"
+                      : "border-transparent text-bark hover:text-oak hover:border-oak"
                   }`}
                   style={{ letterSpacing: "0.03em" }}
                 >
-                  {itemKey === "Flash Sale" ? "⚡ " + itemLabel : itemLabel}
+                  {itemLabel}
                 </Link>
               );
             })}

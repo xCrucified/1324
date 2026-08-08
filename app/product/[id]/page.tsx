@@ -8,25 +8,10 @@ import TopBar from '@/components/shared/top-bar';
 import ProductGallery from '@/components/shared/product-gallery';
 import BuyButton from '@/components/shared/buy-button';
 import ReviewForm from '@/components/shared/review-form';
+import { getCategoryDetails } from '@/constants/categories';
 
 interface Props {
   params: Promise<{ id: string }>;
-}
-
-const CATEGORY_TREE = [
-  { id: 'clothing', name: '👗 Одяг та Взуття', subcategories: [ { id: 'clothing-women', name: 'Жіночий одяг' }, { id: 'clothing-men', name: 'Чоловічий одяг' }, { id: 'clothing-kids', name: 'Дитячий одяг' }, { id: 'clothing-sleep', name: 'Піжами' }, { id: 'clothing-sport', name: 'Спортивні костюми' }, { id: 'clothing-shoes', name: 'Взуття' }, { id: 'clothing-other', name: 'Інше' } ] },
-  { id: 'accessories', name: '🎒 Аксесуари', subcategories: [ { id: 'acc-bags', name: 'Сумки та барсетки' }, { id: 'acc-backpacks', name: 'Рюкзаки' }, { id: 'acc-jewelry', name: 'Біжутерія' }, { id: 'acc-hair', name: 'Аксесуари для волосся' }, { id: 'acc-smart', name: 'Смарт-годинники та браслети' }, { id: 'acc-glasses', name: 'Окуляри' }, { id: 'acc-other', name: 'Інше' } ] },
-  { id: 'home', name: '🏠 Товари для дому', subcategories: [ { id: 'home-organizers', name: 'Органайзери' }, { id: 'home-smart-gadgets', name: 'Міні-гаджети' }, { id: 'home-kitchen', name: 'Кухонне приладдя та посуд' }, { id: 'home-decor', name: 'Декор' }, { id: 'home-textile', name: 'Текстиль' }, { id: 'home-other', name: 'Інше' } ] },
-];
-
-function getCategoryDetails(catId?: string | null): { name: string; id: string } | null {
-  if (!catId) return null;
-  for (const parent of CATEGORY_TREE) {
-    if (parent.id === catId) return { name: parent.name, id: parent.id };
-    const sub = parent.subcategories.find((s) => s.id === catId);
-    if (sub) return { name: `${parent.name} → ${sub.name}`, id: sub.id };
-  }
-  return { name: catId, id: catId };
 }
 
 export default async function ProductPage({ params }: Props) {
@@ -60,19 +45,14 @@ export default async function ProductPage({ params }: Props) {
   let parsedSizes: string[] = [];
   if (product.sizes) {
     try {
-      // Перевіряємо чи це масив JSON
       const parsedJson = JSON.parse(product.sizes);
       if (Array.isArray(parsedJson)) {
-        // Підтримка формату масиву рядків ["S", "M"] або об'єктів [{name: "S"}]
         parsedSizes = parsedJson.map((s: any) => typeof s === 'object' ? (s.name || s.value || '') : String(s)).filter(Boolean);
       }
     } catch (e) {
-      // Fallback: якщо це звичайний текст
       if (product.sizes.includes(',')) {
-        // Якщо розділено комами (старий формат)
         parsedSizes = product.sizes.split(',').map(s => s.trim()).filter(Boolean);
       } else {
-        // Якщо користувач забув коми і ввів через пробіли: "41 42 43"
         parsedSizes = product.sizes.split(/\s+/).map(s => s.trim()).filter(Boolean);
       }
     }
@@ -91,7 +71,6 @@ export default async function ProductPage({ params }: Props) {
     }
   }
 
-  // Обробка даних з опису, якщо в базі порожньо
   const sizeMatch = displayDescription.match(/Sizes?:\s*([^\n]+)/i);
   if (sizeMatch && parsedSizes.length === 0) {
     parsedSizes = sizeMatch[1].split(',').map(s => s.trim()).filter(Boolean);
