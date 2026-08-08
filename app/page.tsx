@@ -13,14 +13,19 @@ export default async function Page({ searchParams }: PageProps) {
   const resolvedParams = await searchParams;
   const selectedCategory = resolvedParams?.category || "Home";
 
-  // 2. Формуємо умову для вибірки з БД
-  let whereClause = {};
-  if (
-    selectedCategory !== "Home" &&
-    selectedCategory !== "Flash Sale" &&
-    selectedCategory !== "New Arrivals" &&
-    selectedCategory !== "Sellers"
-  ) {
+  // 2. Формуємо умову для вибірки з БД з урахуванням спеціальних вкладок
+  let whereClause: any = {};
+  
+  if (selectedCategory === "Flash Sale") {
+    // Наприклад, можна відбирати товари з найнижчою ціною або акційні
+    // Якщо спец-логіки немає, залишаємо пустим або додаємо умову
+  } else if (selectedCategory === "New Arrivals") {
+    // Можна обмежити останніми надходженнями або залишити сортування за часом
+  } else if (selectedCategory === "Sellers" || selectedCategory === "Home") {
+    // Показуємо всі товари
+    whereClause = {};
+  } else {
+    // Звичайна категорія (наприклад, 'clothing-men', 'accessories' тощо)
     whereClause = {
       categoryId: selectedCategory,
     };

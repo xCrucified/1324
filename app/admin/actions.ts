@@ -285,6 +285,7 @@ export async function parseAndSaveProduct(rawInputUrl: string) {
         description: formattedDescription,
         image: mainImage,
         images: allImages,
+        sourceUrl: cleanUrl,
       },
     })
 
@@ -299,14 +300,34 @@ export async function updateProduct(id: string, formData: FormData) {
   const title = formData.get('title') as string
   const price = parseFloat(formData.get('price') as string)
   const description = formData.get('description') as string
-  const image = formData.get('image') as string
-  // Зчитуємо категорію з форми редагування
   const categoryId = (formData.get('categoryId') as string) || null
+  const sourceUrl = (formData.get('sourceUrl') as string) || null
+  const sizes = (formData.get('sizes') as string) || null
+  const colorVariants = (formData.get('colorVariants') as string) || null
 
-  const rawImages = formData.get('images') as string
-  const images = rawImages
-    ? rawImages.split('\n').map((url) => url.trim()).filter((url) => url.length > 0)
+  // Зчитування картинок з текстового поля (imagesText)
+  const rawImagesText = formData.get('imagesText') as string
+  const textImages = rawImagesText
+    ? rawImagesText.split('\n').map((url) => url.trim()).filter((url) => url.length > 0)
     : []
+
+  // Обробка файлів, якщо вони були завантажені через інпут (опціонально, якщо ви зберігаєте базовану або завантажуєте файти)
+  const imageFiles = formData.getAll('imageFiles') as File[]
+  const uploadedImageUrls: string[] = []
+
+  for (const file of imageFiles) {
+    if (file && file.size > 0) {
+      // Конвертація файлу у base64 для збереження в базу або локально (або тут можна підключити сховище на кшталт S3/Vercel Blob)
+      const bytes = await file.arrayBuffer()
+      const buffer = Buffer.from(bytes)
+      const base64Image = `data:${file.type};base64,${buffer.toString('base64')}`
+      uploadedImageUrls.push(base64Image)
+    }
+  }
+
+  // Об'єднуємо завантажені файли та текстові посилання (файли йдуть першими, як нові або головні)
+  const allImages = [...uploadedImageUrls, ...textImages]
+  const mainImage = allImages[0] || ''
 
   await prisma.product.update({
     where: { id },
@@ -314,9 +335,12 @@ export async function updateProduct(id: string, formData: FormData) {
       title,
       price: isNaN(price) ? 0 : price,
       description,
-      image: image || (images[0] ?? ''),
-      images,
-      categoryId, // Додано збереження категорії в БД
+      image: mainImage,
+      images: allImages,
+      categoryId,
+      sourceUrl,
+      sizes,
+      colorVariants,
     },
   })
 

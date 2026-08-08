@@ -63,28 +63,31 @@ model VerificationToken {
 }
 
 model Product {
-  id          String      @id @default(cuid())
-  title       String
-  price       Float
-  description String?     @db.Text
-  image       String?
-  images      String[]
+  id            String      @id @default(cuid())
+  title         String
+  price         Float
+  description   String?     @db.Text
+  image         String?
+  images        String[]
   
-  // Зв'язок вимкнено, тепер це просто текстове поле для збереження ID категорії з вашого хардкод-списку
-  categoryId  String?
+  // Додано поля, які використовуються у вашому коді оновлення (update)
+  sourceUrl     String?
+  sizes         String?
+  colorVariants String?     @db.Text
   
-  orderItems  OrderItem[]
-  favorites   Favorite[]
-  reviews     Review[]    // Зв'язок з відгуками
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @default(now()) @updatedAt
+  categoryId    String?
+  
+  orderItems    OrderItem[]
+  favorites     Favorite[]
+  reviews       Review[]    
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @default(now()) @updatedAt
 }
 
 model Category {
   id       String    @id @default(cuid())
   name     String    @unique
   slug     String    @unique
-  // products Product[]  <-- Цей рядок також видалено, бо зв'язку з товарами більше немає
 }
 
 model Order {
