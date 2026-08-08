@@ -12,7 +12,6 @@ interface BuyButtonProps {
   sizes?: any;
   colors?: any;
   images?: any;
-  // Додаємо пропси, які передає product-selector.tsx
   selectedColor?: string | null;
   selectedSize?: string | null;
 }
@@ -32,6 +31,13 @@ export default function BuyButton({
   const [loading, setLoading] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+
+  // Стейти для помилок
+  const [phoneError, setPhoneError] = useState('');
+  const [firstNameError, setFirstNameError] = useState('');
+  const [lastNameError, setLastNameError] = useState('');
+  const [checkoutError, setCheckoutError] = useState('');
+  const [selectionError, setSelectionError] = useState('');
 
   // --- Універсальний безпечний парсер для даних з БД ---
   const safeParse = (data: any, fallback: any = []) => {
@@ -139,28 +145,68 @@ export default function BuyButton({
     .map((c: any, idx: number) => parseColorItem(c, idx))
     .filter((c: any) => c.name);
 
-  // Внутрішній стейт (використовується, якщо product-selector не передає пропси)
   const [internalSelectedSize, setInternalSelectedSize] = useState<string>(normalizedSizes.length > 0 ? normalizedSizes[0] : '');
   const [internalSelectedColor, setInternalSelectedColor] = useState<string>(normalizedColors.length > 0 ? normalizedColors[0].name : '');
 
-  // Поля форми
-  const [firstName, setFirstName] = useState(() => session?.user?.name?.split(' ')[0] || '');
-  const [lastName, setLastName] = useState(() => {
-    const parts = session?.user?.name?.split(' ') || [];
-    return parts.length > 1 ? parts.slice(1).join(' ') : '';
-  });
-  const [email, setEmail] = useState(() => session?.user?.email || '');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
 
-  // Нова Пошта стейти
+  // Фільтрація для імені
+  const handleFirstNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value;
+    let cleaned = val.replace(/[^a-zA-Zа-яА-ЯёЁіІїЇєЄґҐ\s\-']/g, '');
+    setFirstName(cleaned);
+    if (firstNameError) setFirstNameError('');
+  };
+
+  // Фільтрація для прізвища
+  const handleLastNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value;
+    let cleaned = val.replace(/[^a-zA-Zа-яА-ЯёЁіІїЇєЄґҐ\s\-']/g, '');
+    setLastName(cleaned);
+    if (lastNameError) setLastNameError('');
+  };
+
+  // Обробник для захищеного введення телефону
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value;
+    let cleaned = val.replace(/(?!^)\+|[^\d+]/g, '');
+    setPhone(cleaned);
+    if (phoneError) setPhoneError('');
+  };
+
+  // Автоматичне заповнення полів із сесії при її завантаженні
+  useEffect(() => {
+    if (session?.user) {
+      if (session.user.email) {
+        setEmail((prev) => prev || session.user.email || '');
+      }
+      if (session.user.name) {
+        const parts = session.user.name.split(' ');
+        const cleanFirst = (parts[0] || '').replace(/[^a-zA-Zа-яА-ЯёЁіІїЇєЄґҐ\s\-']/g, '');
+        const cleanLast = (parts.length > 1 ? parts.slice(1).join(' ') : '').replace(/[^a-zA-Zа-яА-ЯёЁіІїЇєЄґҐ\s\-']/g, '');
+        setFirstName((prev) => prev || cleanFirst);
+        setLastName((prev) => prev || cleanLast);
+      }
+    }
+  }, [session]);
+
+  // Нова Пошта стейти (Місто)
   const [city, setCity] = useState('');
   const [cityRef, setCityRef] = useState('');
   const [citySearch, setCitySearch] = useState('');
   const [cities, setCities] = useState<any[]>([]);
   const [showCities, setShowCities] = useState(false);
+
+  // Нова Пошта стейти (Відділення)
   const [warehouse, setWarehouse] = useState('');
+  const [warehouseSearch, setWarehouseSearch] = useState('');
   const [warehouses, setWarehouses] = useState<any[]>([]);
+  const [showWarehouses, setShowWarehouses] = useState(false);
   const [loadingWarehouses, setLoadingWarehouses] = useState(false);
+
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
   const [isChoosingAddress, setIsChoosingAddress] = useState(false);
 
@@ -168,13 +214,18 @@ export default function BuyButton({
     const saved = localStorage.getItem('user_novaposhta_addresses');
     if (saved) {
       try {
-        setSavedAddresses(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        setSavedAddresses(parsed);
+        if (parsed.length > 0) {
+          setIsChoosingAddress(true);
+        }
       } catch (e) {
         console.error(e);
       }
     }
   }, []);
 
+  // Пошук міст
   useEffect(() => {
     if (citySearch.length < 2) {
       setCities([]);
@@ -202,6 +253,7 @@ export default function BuyButton({
     return () => clearTimeout(timer);
   }, [citySearch, city]);
 
+  // Завантаження відділень для обраного міста
   useEffect(() => {
     if (!cityRef) {
       setWarehouses([]);
@@ -228,12 +280,25 @@ export default function BuyButton({
     fetchWarehouses();
   }, [cityRef]);
 
+  const filteredWarehouses = warehouses.filter((wh: any) =>
+    wh.description.toLowerCase().includes(warehouseSearch.toLowerCase())
+  );
+
   const handleCitySelect = (selectedCity: { name: string; ref: string }) => {
     setCity(selectedCity.name);
     setCitySearch(selectedCity.name);
     setCityRef(selectedCity.ref);
     setWarehouse('');
+    setWarehouseSearch('');
     setShowCities(false);
+    if (checkoutError) setCheckoutError('');
+  };
+
+  const handleWarehouseSelect = (wh: any) => {
+    setWarehouse(wh.description);
+    setWarehouseSearch(wh.description);
+    setShowWarehouses(false);
+    if (checkoutError) setCheckoutError('');
   };
 
   const handleSelectSavedAddress = (addr: any) => {
@@ -245,24 +310,27 @@ export default function BuyButton({
       setCitySearch(addr.city);
     }
     if (addr.cityRef) setCityRef(addr.cityRef);
-    if (addr.warehouse) setWarehouse(addr.warehouse);
+    if (addr.warehouse) {
+      setWarehouse(addr.warehouse);
+      setWarehouseSearch(addr.warehouse);
+    }
     setIsChoosingAddress(false);
+    if (checkoutError) setCheckoutError('');
   };
 
-  // Визначаємо фінальний розмір та колір (перевага надається зовнішнім пропсам)
   const finalSize = externalSelectedSize !== undefined ? externalSelectedSize : internalSelectedSize;
   const finalColor = externalSelectedColor !== undefined ? externalSelectedColor : internalSelectedColor;
 
   const handleOpenCheckout = () => {
-    // Якщо розміри та кольори передані всередині BuyButton, перевіряємо їх
     if (normalizedSizes.length > 0 && !finalSize) {
-      alert('Будь ласка, оберіть розмір товару.');
+      setSelectionError('Будь ласка, оберіть розмір товару.');
       return;
     }
     if (normalizedColors.length > 0 && !finalColor) {
-      alert('Будь ласка, оберіть колір товару.');
+      setSelectionError('Будь ласка, оберіть колір товару.');
       return;
     }
+    setSelectionError('');
 
     if (status === 'unauthenticated' || !session) {
       setShowAuthModal(true);
@@ -273,15 +341,94 @@ export default function BuyButton({
     } else {
       setIsChoosingAddress(false);
     }
+    setCheckoutError('');
     setShowCheckoutModal(true);
   };
 
-  const handlePaymentSubmit = async (e: React.FormEvent) => {
+  // Кнопка "Зберегти адресу" під час створення нової адреси
+  const handleSaveAddress = (e: React.FormEvent) => {
     e.preventDefault();
+    setCheckoutError('');
+
+    const nameRegex = /^[a-zA-Zа-яА-ЯёЁіІїЇєЄґҐ\s\-']+$/;
+    let hasError = false;
+
+    if (!firstName.trim() || !nameRegex.test(firstName) || /\d/.test(firstName)) {
+      setFirstNameError("Введіть коректне ім'я (тільки букви)");
+      hasError = true;
+    }
+
+    if (!lastName.trim() || !nameRegex.test(lastName) || /\d/.test(lastName)) {
+      setLastNameError("Введіть коректне прізвище (тільки букви)");
+      hasError = true;
+    }
 
     if (!city || !warehouse) {
-      alert('Будь ласка, оберіть місто та відділення Нової Пошти');
+      setCheckoutError('Будь ласка, оберіть місто та відділення Нової Пошти зі списку!');
+      hasError = true;
+    }
+
+    const phoneDigits = phone.replace(/[^\d]/g, '');
+    let normalizedPhone = '';
+    if (phoneDigits.length === 10 && phoneDigits.startsWith('0')) {
+      normalizedPhone = '+38' + phoneDigits; 
+    } else if (phoneDigits.length === 12 && phoneDigits.startsWith('380')) {
+      normalizedPhone = '+' + phoneDigits; 
+    } else if (phoneDigits.length === 9) {
+      normalizedPhone = '+380' + phoneDigits; 
+    }
+
+    if (!normalizedPhone || normalizedPhone.length !== 13) {
+      setPhoneError('Введіть коректний номер телефону (наприклад, +380501234567 або 0501234567)');
+      hasError = true;
+    }
+
+    if (hasError) return;
+
+    const newAddress = {
+      id: Date.now().toString(),
+      addressName: `${city}, ${warehouse.slice(0, 25)}...`,
+      firstName,
+      lastName,
+      phone: normalizedPhone,
+      city,
+      cityRef,
+      warehouse,
+    };
+
+    const existingAddresses = [...savedAddresses];
+    const isDuplicate = existingAddresses.some(
+      (a) => a.city === city && a.warehouse === warehouse
+    );
+
+    if (!isDuplicate) {
+      const updatedAddresses = [newAddress, ...existingAddresses].slice(0, 5);
+      setSavedAddresses(updatedAddresses);
+      localStorage.setItem('user_novaposhta_addresses', JSON.stringify(updatedAddresses));
+    }
+
+    // Перемикаємось на вибір збереженої адреси
+    setIsChoosingAddress(true);
+  };
+
+  // Кнопка "Перейти до оплати" після вибору адреси
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCheckoutError('');
+
+    if (!city || !warehouse) {
+      setCheckoutError('Будь ласка, оберіть адресу доставки!');
       return;
+    }
+
+    const phoneDigits = phone.replace(/[^\d]/g, '');
+    let normalizedPhone = '';
+    if (phoneDigits.length === 10 && phoneDigits.startsWith('0')) {
+      normalizedPhone = '+38' + phoneDigits; 
+    } else if (phoneDigits.length === 12 && phoneDigits.startsWith('380')) {
+      normalizedPhone = '+' + phoneDigits; 
+    } else if (phoneDigits.length === 9) {
+      normalizedPhone = '+380' + phoneDigits; 
     }
 
     setLoading(true);
@@ -289,34 +436,12 @@ export default function BuyButton({
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
-      const newAddress = {
-        id: Date.now().toString(),
-        addressName: `${city}, ${warehouse.slice(0, 25)}...`,
-        firstName,
-        lastName,
-        phone,
-        city,
-        cityRef,
-        warehouse,
-      };
-
-      const existingAddresses = [...savedAddresses];
-      const isDuplicate = existingAddresses.some(
-        (a) => a.city === city && a.warehouse === warehouse
-      );
-
-      if (!isDuplicate) {
-        const updatedAddresses = [newAddress, ...existingAddresses].slice(0, 5);
-        setSavedAddresses(updatedAddresses);
-        localStorage.setItem('user_novaposhta_addresses', JSON.stringify(updatedAddresses));
-      }
-
       const paymentData = {
         priceAmount: priceInUah,
         firstName,
         lastName,
         email: email || session?.user?.email || 'client@pentu24.com',
-        phone,
+        phone: normalizedPhone,
         city,
         warehouse,
         items: [
@@ -365,9 +490,9 @@ export default function BuyButton({
     } catch (error: any) {
       console.error('Payment fetch error:', error);
       if (error.name === 'AbortError') {
-        alert('Перевищено час очікування сервера.');
+        setCheckoutError('Перевищено час очікування сервера.');
       } else {
-        alert(error.message || 'Помилка з’єднання з сервером оплати');
+        setCheckoutError(error.message || 'Помилка з’єднання з сервером оплати');
       }
     } finally {
       setLoading(false);
@@ -379,7 +504,6 @@ export default function BuyButton({
       <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-5 space-y-4">
           
-          {/* ВИБІР РОЗМІРУ (якщо передані безпосередньо в BuyButton) */}
           {normalizedSizes.length > 0 && (
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wider">
@@ -390,7 +514,7 @@ export default function BuyButton({
                   <button
                     key={`size-${s}-${idx}`}
                     type="button"
-                    onClick={() => setInternalSelectedSize(s)}
+                    onClick={() => { setInternalSelectedSize(s); if (selectionError) setSelectionError(''); }}
                     className={`min-w-[40px] px-3 py-1.5 rounded-lg border text-sm font-medium transition-all cursor-pointer ${
                       internalSelectedSize === s
                         ? 'border-orange-500 bg-orange-50 text-orange-600 shadow-sm'
@@ -404,7 +528,6 @@ export default function BuyButton({
             </div>
           )}
 
-          {/* ВИБІР КОЛЬОРУ (якщо передані безпосередньо в BuyButton) */}
           {normalizedColors.length > 0 && (
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wider">
@@ -415,7 +538,7 @@ export default function BuyButton({
                   <button
                     key={`color-${colorItem.name}-${idx}`}
                     type="button"
-                    onClick={() => setInternalSelectedColor(colorItem.name)}
+                    onClick={() => { setInternalSelectedColor(colorItem.name); if (selectionError) setSelectionError(''); }}
                     className={`flex items-center gap-2 p-1.5 pr-3 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
                       internalSelectedColor === colorItem.name
                         ? 'border-orange-500 bg-orange-50 text-orange-600 shadow-sm ring-1 ring-orange-500'
@@ -445,6 +568,10 @@ export default function BuyButton({
                 ))}
               </div>
             </div>
+          )}
+
+          {selectionError && (
+            <p className="text-xs text-red-500 font-medium">{selectionError}</p>
           )}
 
           <div className="flex justify-between items-center bg-gray-50/80 p-4 rounded-xl border border-gray-100 mt-2">
@@ -505,6 +632,12 @@ export default function BuyButton({
               )}
             </div>
 
+            {checkoutError && (
+              <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-xl text-xs">
+                {checkoutError}
+              </div>
+            )}
+
             {isChoosingAddress ? (
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
@@ -541,6 +674,19 @@ export default function BuyButton({
                     </div>
                   ))}
                 </div>
+
+                {/* Кнопка швидкого переходу до форми оплати з вибраною адресою */}
+                {city && warehouse && (
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsChoosingAddress(false)}
+                      className="w-full bg-gray-900 hover:bg-black text-white font-semibold py-3 px-4 rounded-xl transition text-xs cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      Продовжити з обраною адресою ({city})
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <form onSubmit={handlePaymentSubmit} className="space-y-4">
@@ -557,11 +703,31 @@ export default function BuyButton({
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Ім&apos;я *</label>
-                    <input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-xs focus:border-orange-500 focus:bg-white outline-none transition text-gray-900" placeholder="Ім'я" />
+                    <input 
+                      type="text" 
+                      required 
+                      value={firstName} 
+                      onChange={handleFirstNameChange} 
+                      className={`w-full bg-gray-50/50 border ${firstNameError ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-orange-500'} rounded-xl p-2.5 text-xs focus:bg-white outline-none transition text-gray-900`} 
+                      placeholder="Ім'я" 
+                    />
+                    {firstNameError && (
+                      <p className="text-[11px] text-red-500 mt-1 leading-tight">{firstNameError}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Прізвище *</label>
-                    <input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} className="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-xs focus:border-orange-500 focus:bg-white outline-none transition text-gray-900" placeholder="Прізвище" />
+                    <input 
+                      type="text" 
+                      required 
+                      value={lastName} 
+                      onChange={handleLastNameChange} 
+                      className={`w-full bg-gray-50/50 border ${lastNameError ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-orange-500'} rounded-xl p-2.5 text-xs focus:bg-white outline-none transition text-gray-900`} 
+                      placeholder="Прізвище" 
+                    />
+                    {lastNameError && (
+                      <p className="text-[11px] text-red-500 mt-1 leading-tight">{lastNameError}</p>
+                    )}
                   </div>
                 </div>
 
@@ -572,14 +738,67 @@ export default function BuyButton({
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Телефон *</label>
-                    <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-xs focus:border-orange-500 focus:bg-white outline-none transition text-gray-900" placeholder="+380..." />
+                    <input 
+                      type="tel" 
+                      required 
+                      value={phone} 
+                      onChange={handlePhoneChange} 
+                      className={`w-full bg-gray-50/50 border ${phoneError ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-orange-500'} rounded-xl p-2.5 text-xs focus:bg-white outline-none transition text-gray-900`} 
+                      placeholder="+380501234567" 
+                    />
+                    {phoneError && (
+                      <p className="text-[11px] text-red-500 mt-1 leading-tight">{phoneError}</p>
+                    )}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="relative">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Місто (Нова Пошта) *</label>
-                    <input type="text" required value={citySearch} onChange={(e) => { setCitySearch(e.target.value); setShowCities(true); }} onFocus={() => setShowCities(true)} className="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-xs focus:border-orange-500 focus:bg-white outline-none transition text-gray-900" placeholder="Введіть місто..." />
+                    <input 
+                      type="text" 
+                      required 
+                      value={citySearch} 
+                      onChange={(e) => { 
+                        setCitySearch(e.target.value); 
+                        setCity(''); 
+                        setCityRef('');
+                        setWarehouse('');
+                        setWarehouseSearch('');
+                        setShowCities(true); 
+                      }} 
+                      onFocus={() => setShowCities(true)} 
+                      onBlur={() => {
+                        setTimeout(() => {
+                          setShowCities(false);
+                        }, 200);
+                      }}
+                      onKeyDown={async (e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (cities.length > 0) {
+                            handleCitySelect(cities[0]);
+                          } else if (citySearch.trim().length >= 2) {
+                            try {
+                              const res = await fetch('/api/novaposhta', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'getCities', query: citySearch }),
+                              });
+                              const data = await res.json();
+                              if (Array.isArray(data) && data.length > 0) {
+                                setCities(data);
+                                handleCitySelect(data[0]);
+                              }
+                            } catch (error) {
+                              console.error('Помилка завантаження міст:', error);
+                            }
+                          }
+                        }
+                      }}
+                      className="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-xs focus:border-orange-500 focus:bg-white outline-none transition text-gray-900" 
+                      placeholder="Введіть місто..." 
+                    />
                     {showCities && cities.length > 0 && (
                       <ul className="absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-44 overflow-y-auto">
                         {cities.map((item: any) => (
@@ -591,32 +810,86 @@ export default function BuyButton({
                     )}
                   </div>
 
-                  <div>
+                  <div className="relative">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Відділення НП *</label>
-                    <select required disabled={!cityRef || loadingWarehouses} value={warehouse} onChange={(e) => setWarehouse(e.target.value)} className="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-xs focus:border-orange-500 focus:bg-white outline-none transition text-gray-900 disabled:opacity-50 cursor-pointer">
-                      <option value="" disabled>{loadingWarehouses ? 'Завантаження...' : 'Оберіть відділення'}</option>
-                      {warehouses.map((wh: any) => (
-                        <option key={wh.ref} value={wh.description}>{wh.description}</option>
-                      ))}
-                    </select>
+                    <input 
+                      type="text" 
+                      required 
+                      disabled={!cityRef || loadingWarehouses} 
+                      value={warehouseSearch} 
+                      onChange={(e) => {
+                        setWarehouseSearch(e.target.value);
+                        setWarehouse('');
+                        setShowWarehouses(true);
+                      }}
+                      onFocus={() => setShowWarehouses(true)}
+                      onBlur={() => {
+                        setTimeout(() => {
+                          setShowWarehouses(false);
+                        }, 200);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (filteredWarehouses.length > 0) {
+                            handleWarehouseSelect(filteredWarehouses[0]);
+                          } else if (warehouses.length > 0) {
+                            handleWarehouseSelect(warehouses[0]);
+                          }
+                        }
+                      }}
+                      className="w-full bg-gray-50/50 border border-gray-200 rounded-xl p-2.5 text-xs focus:border-orange-500 focus:bg-white outline-none transition text-gray-900 disabled:opacity-50 cursor-text" 
+                      placeholder={loadingWarehouses ? 'Завантаження...' : '№ відділення або вулиця'}
+                    />
+                    {showWarehouses && filteredWarehouses.length > 0 && (
+                      <ul className="absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-52 overflow-y-auto">
+                        {filteredWarehouses.map((wh: any) => (
+                          <li 
+                            key={wh.ref} 
+                            onClick={() => handleWarehouseSelect(wh)} 
+                            className="p-2.5 text-xs hover:bg-orange-50 hover:text-orange-600 cursor-pointer text-gray-800 border-b border-gray-100 last:border-none transition"
+                          >
+                            {wh.description}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {showWarehouses && filteredWarehouses.length === 0 && warehouseSearch && (
+                      <div className="absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl p-3 text-xs text-gray-500 text-center">
+                        Відділення не знайдено
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="pt-2">
-                  <button type="submit" disabled={loading} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3.5 px-6 rounded-xl transition-all shadow-md shadow-orange-500/15 disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2 text-sm cursor-pointer">
+                <div className="pt-2 grid grid-cols-2 gap-2">
+                  <button 
+                    type="button" 
+                    onClick={handleSaveAddress}
+                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-3.5 px-4 rounded-xl transition-all text-xs cursor-pointer flex justify-center items-center gap-1.5"
+                  >
+                    <MapPin className="w-4 h-4 text-orange-500" />
+                    Зберегти адресу
+                  </button>
+
+                  <button 
+                    type="submit" 
+                    disabled={loading} 
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3.5 px-4 rounded-xl transition-all shadow-md shadow-orange-500/15 disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-1.5 text-xs cursor-pointer"
+                  >
                     {loading ? (
                       <>
-                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Створення замовлення...
+                        Зачекайте...
                       </>
                     ) : (
                       <>
                         <Lock className="w-4 h-4" />
-                        Перейти до оплати ({priceInUah} ₴)
-                        <ExternalLink className="w-4 h-4 ml-1 opacity-70" />
+                        До сплати ({priceInUah} ₴)
+                        <ExternalLink className="w-3.5 h-3.5 ml-0.5 opacity-70" />
                       </>
                     )}
                   </button>
