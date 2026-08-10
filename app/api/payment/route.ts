@@ -3,68 +3,134 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
   try {
+    console.log("\n========================================");
+    console.log("🚀 /api/payment START");
+    console.log("========================================");
+
     const body = await request.json();
-    
+
+    console.log("📦 BODY:");
+    console.dir(body, { depth: null });
+
     let priceAmount = Number(body.priceAmount || body.total || 0);
 
-    // Підрахунок суми, якщо вона не передана напряму
-    if (priceAmount <= 0 && Array.isArray(body.items) && body.items.length > 0) {
+    if (
+      priceAmount <= 0 &&
+      Array.isArray(body.items) &&
+      body.items.length > 0
+    ) {
       priceAmount = body.items.reduce(
-        (sum: number, item: { price?: number | string; quantity?: number | string }) =>
-          sum + (Number(item.price) || 0) * (Number(item.quantity) || 1),
-        0
+        (
+          sum: number,
+          item: { price?: number | string; quantity?: number | string },
+        ) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 1),
+        0,
       );
     }
 
+    console.log("💰 PRICE:", priceAmount);
+
     if (priceAmount <= 0) {
-      return NextResponse.json({ error: 'Сума замовлення повинна бути більшою за нуль' }, { status: 400 });
+      console.error("❌ PRICE ERROR");
+      return NextResponse.json(
+        {
+          error: "Сума замовлення повинна бути більшою за нуль",
+          receivedBody: body,
+        },
+        { status: 400 },
+      );
     }
 
     const orderId = `order_${Date.now()}`;
-    // Беремо останні 8 символів для короткого коментаря
-    const shortOrderId = orderId.slice(-8);
+    const shortOrderId = orderId.length > 10 ? orderId.slice(-8) : orderId;
 
-    // Створюємо замовлення в базі з усіма необхідними полями
+    console.log("🆔 ORDER ID:", orderId);
+
+    if (Array.isArray(body.items)) {
+      console.log("🛒 ITEMS");
+      for (const item of body.items) {
+        const productId = item.productId || item.id;
+        const product = await prisma.product.findUnique({
+          where: { id: productId },
+        });
+        console.log(`🔍 PRODUCT RESULT FOR ${productId}:`);
+        console.dir(product, { depth: null });
+      }
+    }
+
+    console.log("==============================");
+    console.log("CREATE ORDER");
+    console.log("==============================");
+
     const order = await prisma.order.create({
       data: {
         id: orderId,
-        firstName: body.firstName || 'Гість',
-        lastName: body.lastName || '',
-        email: body.email || 'client@pentu24.com',
-        phone: body.phone || '',
-        city: body.city || '',
-        warehouse: body.warehouse || '',
+        firstName: body.firstName || "Гість",
+        lastName: body.lastName || "",
+        email: body.email || "client@pentu24.com",
+        phone: body.phone || "",
+        city: body.city || "",
+        warehouse: body.warehouse || "",
         telegram: body.telegram || null,
         total: priceAmount,
-        status: 'Processing',
         itemsCount: Array.isArray(body.items)
           ? body.items.reduce(
-              (acc: number, item: { quantity?: number | string }) => acc + (Number(item.quantity) || 1),
-              0
+              (acc: number, item: { quantity?: number | string }) =>
+                acc + (Number(item.quantity) || 1),
+              0,
             )
           : 1,
+        status: "Processing",
         orderItems: {
-          create: Array.isArray(body.items) && body.items.length
-            ? body.items.map((item: any) => ({
-                productId: item.productId || item.id,
-                quantity: Number(item.quantity) || 1,
-                price: Number(item.price) || priceAmount,
-                size: item.size || null,
-                color: item.color || null,
-              }))
-            : [],
+          create:
+            Array.isArray(body.items) && body.items.length > 0
+              ? body.items.map(
+                  (item: {
+                    productId: string;
+                    id: string;
+                    quantity: number;
+                    price: number;
+                    size: number;
+                    color: string;
+                  }) => ({
+                    productId: item.productId || item.id,
+                    quantity: Number(item.quantity) || 1,
+                    price: Number(item.price) || priceAmount,
+                    size: item.size || null,
+                    color: item.color || null,
+                  }),
+                )
+              : [],
         },
       },
     });
 
-    const publicJarCode = process.env.MONOBANK_PUBLIC_JAR_CODE;
+    console.log("✅ ORDER CREATED");
+    console.dir(order, { depth: null });
 
-    if (!publicJarCode) {
-      return NextResponse.json({ error: 'MONOBANK_PUBLIC_JAR_CODE missing' }, { status: 500 });
-    }
+    /*
+      ==============================
+      MONOBANK URL GENERATION
+      ==============================
+    */
 
-    // Генеруємо посилання на банку (a = сума, text = коментар)
-    const paymentUrl = `https://send.monobank.ua/${publicJarCode}?a=${priceAmount}&text=${shortOrderId}`;
+    // Берем код банки из переменных окружения или используем переданный тобой напрямую
+    const publicJarCode = process.env.MONOBANK_PUBLIC_JAR_CODE || "4Zv6LGmAQ1";
+    
+    console.log("🌐 PUBLIC JAR CODE:", publicJarCode);
+    console.log("🆔 COMMENT:", shortOrderId);
+
+    // Кодируем комментарий для URL (чтобы пробелы и спецсимволы корректно отображались)
+    const comment = encodeURIComponent(`Замовлення #${shortOrderId}`);
+
+    // Формируем финальную ссылку: a=сумма, t=комментарий
+    const paymentUrl = `https://send.monobank.ua/jar/${publicJarCode}?a=${priceAmount}&t=${comment}`;
+
+    console.log("🔗 PAYMENT URL:", paymentUrl);
+
+    console.log("================================");
+    console.log("✅ RESPONSE");
+    console.log("================================");
 
     return NextResponse.json({
       success: true,
@@ -73,12 +139,25 @@ export async function POST(request: Request) {
       payment_url: paymentUrl,
       pay_amount: priceAmount,
     });
-
+    
   } catch (e) {
-    console.error('Payment API Error:', e);
+    console.log("================================");
+    console.log("🔥 FATAL ERROR");
+    console.log("================================");
+
+    console.error(e);
+
+    if (e instanceof Error) {
+      console.error("MESSAGE:", e.message);
+      console.error("STACK:", e.stack);
+    }
+
     return NextResponse.json(
-      { error: "SERVER ERROR", details: e instanceof Error ? e.message : String(e) },
-      { status: 500 }
+      {
+        error: "Внутрішня помилка сервера",
+        details: e instanceof Error ? e.message : String(e),
+      },
+      { status: 500 },
     );
   }
 }
