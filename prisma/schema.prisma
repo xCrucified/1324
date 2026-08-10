@@ -8,14 +8,14 @@ datasource db {
 }
 
 model User {
-  id               String    @id @default(cuid())
+  id               String     @id @default(cuid())
   name             String?
-  email            String?   @unique
-  password         String?    
-  termsAccepted    Boolean   @default(false)
-  role             String    @default("user") 
+  email            String?    @unique
+  password         String?
+  termsAccepted    Boolean    @default(false)
+  role             String     @default("user")
   emailVerified    DateTime?
-  verificationCode String?   // 6-значний код для верифікації
+  verificationCode String? // 6-значний код для верифікації
   codeExpires      DateTime? // Час закінчення терміну дії коду
   image            String?
   accounts         Account[]
@@ -23,8 +23,8 @@ model User {
   orders           Order[]
   favorites        Favorite[]
   reviews          Review[]
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 }
 
 model Account {
@@ -33,12 +33,12 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? 
-  access_token      String? 
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? 
+  id_token          String?
   session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -73,48 +73,49 @@ model Product {
   category    Category?   @relation(fields: [categoryId], references: [id])
   orderItems  OrderItem[]
   favorites   Favorite[]
-  reviews     Review[]    // Зв'язок з відгуками
+  reviews     Review[] // Зв'язок з відгуками
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @default(now()) @updatedAt
 }
 
 model Category {
-  id       String    @id @default(cuid())
-  name     String    @unique
-  slug     String    @unique
+  id      String    @id @default(cuid())
+  name    String    @unique
+  slug    String    @unique
+  Product Product[]
 }
 
 model Order {
-  id          String      @id @default(cuid())
-  userId      String?
-  user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  total       Float
-  status      String      @default("Processing") // Processing, Shipped, Delivered, Cancelled
-  itemsCount  Int
-  firstName   String      // Ім'я
-  lastName    String      // Прізвище
-  email       String
-  phone       String?     // Номер телефону
-  city        String      // Місто Нової Пошти
-  warehouse   String?     // Відділення Нової Пошти
-  telegram    String?     // Telegram (необов'язково)
-  address     String?     // Додаткова адреса (на випадок зворотньої сумісності)
-  country     String?     // Країна
-  payment     String      @default("card")
-  orderItems  OrderItem[]
-  createdAt   DateTime    @default(now())
+  id         String      @id @default(cuid())
+  userId     String?
+  user       User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  total      Float
+  status     String      @default("Processing") // Processing, Shipped, Delivered, Cancelled
+  itemsCount Int
+  firstName  String // Ім'я
+  lastName   String // Прізвище
+  email      String
+  phone      String? // Номер телефону
+  city       String // Місто Нової Пошти
+  warehouse  String? // Відділення Нової Пошти
+  telegram   String? // Telegram (необов'язково)
+  address    String? // Додаткова адреса (на випадок зворотньої сумісності)
+  country    String? // Країна
+  payment    String      @default("card")
+  orderItems OrderItem[]
+  createdAt  DateTime    @default(now())
 }
 
 model OrderItem {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   orderId   String
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   quantity  Int
   price     Float
-  size      String?  // Розмір (якщо вказано у товару)
-  color     String?  // Колір (якщо вказано у товару)
+  size      String? // Розмір (якщо вказано у товару)
+  color     String? // Колір (якщо вказано у товару)
 }
 
 model Favorite {
@@ -130,12 +131,12 @@ model Favorite {
 
 model Review {
   id        String   @id @default(cuid())
-  rating    Int      // Оцінка (від 1 до 5)
+  rating    Int // Оцінка (від 1 до 5)
   text      String   @db.Text // Текст відгуку
   createdAt DateTime @default(now())
 
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
