@@ -180,7 +180,7 @@ export default function RegisterPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Ім'я
+                  Ім`я
                 </label>
                 <input
                   type="text"
