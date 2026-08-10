@@ -12,13 +12,13 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <main className="max-w-7xl mx-auto px-4 py-24 text-center min-h-[60vh] flex flex-col items-center justify-center">
-        <h2 className="text-3xl font-display font-bold text-bark mb-4">Your Cart is Empty</h2>
-        <p className="text-oak font-body mb-8">Looks like you haven`t added anything yet.</p>
+        <h2 className="text-3xl font-display font-bold text-bark mb-4">Ваш кошик порожній</h2>
+        <p className="text-oak font-body mb-8">Схоже, ви ще нічого не додали.</p>
         <Link 
           href="/" 
           className="bg-caramel text-cream px-6 py-3 rounded-sm font-bold hover:bg-amber transition-colors"
         >
-          Start Shopping
+          Перейти до покупок
         </Link>
       </main>
     );
@@ -26,7 +26,7 @@ export default function CartPage() {
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-12 min-h-screen">
-      <h1 className="text-3xl font-display font-bold text-bark mb-8">Your Cart</h1>
+      <h1 className="text-3xl font-display font-bold text-bark mb-8">Ваш кошик</h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Cart Items List */}
@@ -49,7 +49,7 @@ export default function CartPage() {
                   <h3 className="font-body font-bold text-bark leading-tight line-clamp-2">
                     {item.name}
                   </h3>
-                  <p className="text-oak text-xs mt-1">Shop: {item.shop}</p>
+                  <p className="text-oak text-xs mt-1">Магазин: {item.shop}</p>
                 </div>
                 <div className="flex items-center justify-between mt-4">
                   <div className="flex items-center border border-parchment rounded-sm bg-cream">
@@ -71,13 +71,13 @@ export default function CartPage() {
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="font-display font-bold text-amber">
-                      €{(item.price * item.quantity).toFixed(2)}
+                      {(item.price * item.quantity).toFixed(2)} грн
                     </span>
                     <button 
                       onClick={() => removeFromCart(item.id)}
                       className="text-oak hover:text-caramel text-sm transition-colors font-body"
                     >
-                      Remove
+                      Видалити
                     </button>
                   </div>
                 </div>
@@ -89,33 +89,33 @@ export default function CartPage() {
         {/* Order Summary */}
         <div className="lg:col-span-1">
           <div className="bg-ivory border border-parchment rounded-sm p-6 sticky top-24 shadow-sm">
-            <h2 className="font-display font-bold text-bark text-xl mb-4">Order Summary</h2>
+            <h2 className="font-display font-bold text-bark text-xl mb-4">Сума замовлення</h2>
             
             <div className="space-y-3 font-body text-sm text-bark mb-6 border-b border-parchment pb-6">
               <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span>€{total.toFixed(2)}</span>
+                <span>Вартість товарів</span>
+                <span>{total.toFixed(2)} грн</span>
               </div>
               <div className="flex justify-between">
-                <span>Shipping</span>
-                <span className="text-sage font-bold">Free</span>
+                <span>Доставка</span>
+                <span className="text-sage font-bold">Безкоштовно</span>
               </div>
             </div>
             
             <div className="flex justify-between font-display font-bold text-xl text-bark mb-6">
-              <span>Total</span>
-              <span className="text-amber">€{total.toFixed(2)}</span>
+              <span>Загалом</span>
+              <span className="text-amber">{total.toFixed(2)} грн</span>
             </div>
             
             <button className="w-full bg-bark text-cream py-3 rounded-sm font-bold hover:bg-caramel transition-colors">
-              Proceed to Checkout
+              Оформити замовлення
             </button>
             
             <button 
               onClick={clearCart}
               className="w-full mt-4 font-body text-oak text-sm hover:text-bark transition-colors"
             >
-              Clear Cart
+              Очистити кошик
             </button>
           </div>
         </div>

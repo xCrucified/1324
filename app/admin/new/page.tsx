@@ -3,77 +3,99 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ProductForm from '../ProductForm'
-
-async function fileToDataUrl(file: File): Promise<string> {
-  if (!file || file.size === 0) return ''
-  const bytes = await file.arrayBuffer()
-  const buffer = Buffer.from(bytes)
-  const base64 = buffer.toString('base64')
-  const mime = file.type || 'image/jpeg'
-  return `data:${mime};base64,${base64}`
-}
+import { writeFile, mkdir } from 'fs/promises'
+import path from 'path'
 
 async function handleCreateProduct(formData: FormData) {
   'use server'
 
-  const title = (formData.get('title') as string) || 'Новий товар'
-  const price = parseFloat(formData.get('price') as string) || 0
-  const description = (formData.get('description') as string) || ''
-  const sourceUrl = (formData.get('sourceUrl') as string) || ''
+  try {
+    const title = (formData.get('title') as string) || 'Новий товар'
+    const price = parseFloat(formData.get('price') as string) || 0
+    const description = (formData.get('description') as string) || ''
+    const sourceUrl = (formData.get('sourceUrl') as string) || ''
+    
+    // ВАЖЛИВЕ ВИПРАВЛЕННЯ: Надійно обробляємо порожній рядок
+    const rawCategoryId = formData.get('categoryId') as string | null
+    const categoryId = rawCategoryId && rawCategoryId.trim() !== '' ? rawCategoryId.trim() : null
 
-  const images: string[] = []
+    const images: string[] = []
 
-  const rawImagesText = (formData.get('imagesText') as string) || ''
-  const textUrls = rawImagesText
-    .split('\n')
-    .map((url) => url.trim())
-    .filter((url) => url.length > 0)
-  images.push(...textUrls)
+    // 1. Збираємо текстові посилання на фото, якщо вони є
+    const rawImagesText = (formData.get('imagesText') as string) || ''
+    const textUrls = rawImagesText
+      .split('\n')
+      .map((url) => url.trim())
+      .filter((url) => url.length > 0)
+    images.push(...textUrls)
 
-  const files = formData.getAll('imageFiles') as File[]
-  for (const file of files) {
-    if (file && file.size > 0) {
-      const dataUrl = await fileToDataUrl(file)
-      if (dataUrl) {
-        images.push(dataUrl)
+    // 2. Зберігаємо завантажені файли фізично на диск у public/uploads
+    const files = formData.getAll('imageFiles') as File[]
+    if (files && files.length > 0) {
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads')
+      
+      try {
+        await mkdir(uploadDir, { recursive: true })
+      } catch {}
+
+      for (const file of files) {
+        if (file && file.size > 0) {
+          const bytes = await file.arrayBuffer()
+          const buffer = Buffer.from(bytes)
+
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9)
+          const sanitizedFilename = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
+          const filename = `${uniqueSuffix}-${sanitizedFilename}`
+          const filepath = path.join(uploadDir, filename)
+
+          await writeFile(filepath, buffer)
+          images.push(`/uploads/${filename}`)
+        }
       }
     }
+
+    const mainImage = images[0] || 'https://via.placeholder.com/800x800?text=No+Image'
+
+    // 3. Збираємо кольори та розміри
+    const rawColors = (formData.get('colors') as string) || ''
+    const colors = rawColors
+      .split(/[\n,]/)
+      .map((c) => c.trim())
+      .filter((c) => c.length > 0)
+
+    const rawSizes = (formData.get('sizes') as string) || ''
+    const sizes = rawSizes
+      .split(/[\n,]/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0)
+
+    let fullDescription = description
+    if (sourceUrl) {
+      fullDescription += `\n\nSource: ${sourceUrl}`
+    }
+    if (colors.length > 0) {
+      fullDescription += `\nColors: ${colors.join(', ')}`
+    }
+    if (sizes.length > 0) {
+      fullDescription += `\nSizes: ${sizes.join(', ')}`
+    }
+
+    // 4. Створюємо товар у базі через Prisma
+    await prisma.product.create({
+      data: {
+        title,
+        price: isNaN(price) ? 0 : price,
+        description: fullDescription.trim(),
+        image: mainImage,
+        images: images.length > 0 ? images : [mainImage],
+        categoryId, // Зберігаємо категорію (тепер це або валідний ID, або null)
+      },
+    })
+
+  } catch (error: any) {
+    console.error('Помилка при створенні товару:', error)
+    throw new Error(error.message || 'Помилка при створенні товару')
   }
-
-  const mainImage = images[0] || 'https://via.placeholder.com/800x800?text=No+Image'
-
-  const rawColors = (formData.get('colors') as string) || ''
-  const colors = rawColors
-    .split(/[\n,]/)
-    .map((c) => c.trim())
-    .filter((c) => c.length > 0)
-
-  const rawSizes = (formData.get('sizes') as string) || ''
-  const sizes = rawSizes
-    .split(/[\n,]/)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0)
-
-  let fullDescription = description
-  if (sourceUrl) {
-    fullDescription += `\n\nSource: ${sourceUrl}`
-  }
-  if (colors.length > 0) {
-    fullDescription += `\nColors: ${colors.join(', ')}`
-  }
-  if (sizes.length > 0) {
-    fullDescription += `\nSizes: ${sizes.join(', ')}`
-  }
-
-  await prisma.product.create({
-    data: {
-      title,
-      price: isNaN(price) ? 0 : price,
-      description: fullDescription.trim(),
-      image: mainImage,
-      images: images.length > 0 ? images : [mainImage],
-    },
-  })
 
   revalidatePath('/admin')
   revalidatePath('/')
@@ -89,7 +111,7 @@ export default function NewProductPage() {
             ← Назад до панелі
           </Link>
           <h1 className="font-display font-bold text-lg text-cream tracking-wide">
-            Створення товару
+            Створення товару (грн)
           </h1>
           <div className="w-20" />
         </div>

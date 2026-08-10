@@ -6,7 +6,7 @@ interface Props {
   className?: string;
 }
 
-// Данные для колонок футера, которые строго соответствуют ключам (slug) в infoPages
+// Оставлены только актуальные колонки
 const footerColumns = [
   {
     title: "Pentu24",
@@ -23,19 +23,7 @@ const footerColumns = [
       { label: "Політика повернення та відшкодування", slug: "returns-policy" },
       { label: "Методи оплати", slug: "payment-methods" },
       { label: "FAQ", slug: "faq" },
-      { label: "Contact Us", slug: "contact-us" },
-    ],
-  },
-  {
-    title: "Seller hub",
-    links: [
-
-    ],
-  },
-  {
-    title: "Discover",
-    links: [
-
+      { label: "Контакти", slug: "contact-us" },
     ],
   },
 ];
@@ -44,7 +32,7 @@ export const Footer: React.FC<Props> = ({ className }) => {
   return (
     <footer className={cn(className, "bg-bark text-parchment mt-2")}>
       {/* Main footer */}
-      <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 sm:grid-cols-2 gap-8 md:gap-16">
         {footerColumns.map((col) => (
           <div key={col.title}>
             <h3
@@ -75,8 +63,8 @@ export const Footer: React.FC<Props> = ({ className }) => {
         className="border-t border-caramel"
         style={{ borderColor: "rgba(192,118,48,0.3)" }}
       >
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-3 text-center sm:text-left">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
             <span
               className="font-script text-caramel"
               style={{ fontSize: "1.2rem" }}
@@ -90,7 +78,8 @@ export const Footer: React.FC<Props> = ({ className }) => {
               © 2026 Pentu24 Market Ltd. Усі права захищені.
             </span>
           </div>
-          <div className="flex gap-4">
+          
+          <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
             {[
               { label: "Конфіденційність", slug: "privacy" },
               { label: "Умови", slug: "terms" },
@@ -113,5 +102,4 @@ export const Footer: React.FC<Props> = ({ className }) => {
   );
 };
 
-export
- default Footer;
+export default Footer;

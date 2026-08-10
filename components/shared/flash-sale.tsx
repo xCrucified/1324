@@ -108,9 +108,12 @@ export const FlashSale: React.FC<Props> = ({
             </div>
           </div>
 
-          <button className="font-body text-caramel text-xs hover:text-amber transition-colors">
+          <Link
+            href="/store"
+            className="font-body text-caramel text-xs hover:text-amber transition-colors"
+          >
             Переглянути всі →
-          </button>
+          </Link>
         </div>
 
         {/* Products */}
