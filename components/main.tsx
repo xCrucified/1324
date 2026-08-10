@@ -19,10 +19,10 @@ import { cn } from "@/lib/utils";
 import { useShopStore } from "@/store/use-shop";
 import { Prisma } from "@prisma/client";
 
-// Автоматичне виведення точного типу продукту з Prisma
-export type PrismaProductWithCategory = Prisma.ProductGetPayload<{
-  include: { category: true };
-}>;
+// Безпечне виведення типу продукту з Prisma без жорсткої прив'язки до relation category
+export type PrismaProductWithCategory = Prisma.ProductGetPayload<{}> & {
+  category?: any;
+};
 
 export type UIProduct = {
   id: string;
@@ -43,12 +43,14 @@ export type UIProduct = {
 interface Props {
   className?: string;
   selectedCategory?: string;
+  categoryTitle?: string; // Додано проп для гарної української назви
   initialProducts: PrismaProductWithCategory[];
 }
 
 export const Main: React.FC<Props> = ({
   className,
   selectedCategory = "Home",
+  categoryTitle,
   initialProducts,
 }) => {
   const [toastVisible, setToastVisible] = useState(false);
@@ -67,6 +69,8 @@ export const Main: React.FC<Props> = ({
   }, []);
 
   const catalog: UIProduct[] = useMemo(() => {
+    if (!initialProducts || !Array.isArray(initialProducts)) return [];
+
     return initialProducts.map((p) => {
       // Перевіряємо поля title / name безпечним способом
       const displayTitle =
@@ -201,7 +205,7 @@ export const Main: React.FC<Props> = ({
               <h1 className="font-display font-bold text-xl text-bark">
                 {query.trim()
                   ? `Результати пошуку для "${query}"`
-                  : selectedCategory}
+                  : categoryTitle || selectedCategory}
               </h1>
               <span className="font-body text-oak text-xs">
                 Знайдено: {filtered.length}

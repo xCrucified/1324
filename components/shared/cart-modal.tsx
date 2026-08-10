@@ -21,7 +21,7 @@ export default function CartModal({ isOpen, onClose }: Props) {
     0,
   );
 
-  // Закрываем по клавише Escape
+  // Закриваємо по клавіші Escape
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -30,7 +30,7 @@ export default function CartModal({ isOpen, onClose }: Props) {
     return () => window.removeEventListener("keydown", handleEsc);
   }, [isOpen, onClose]);
 
-  // Блокируем скролл страницы, когда корзина открыта
+  // Блокуємо скрол сторінки, коли кошик відкритий
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -43,13 +43,13 @@ export default function CartModal({ isOpen, onClose }: Props) {
   }, [isOpen]);
 
   const handleProceedToCheckout = () => {
-    onClose(); // Закрываем модалку корзины
-    router.push("/checkout"); // Переходим на страницу оформления
+    onClose(); // Закриваємо модалку кошика
+    router.push("/checkout"); // Переходимо на сторінку оформлення
   };
 
   return (
     <>
-      {/* Затемнение фона (Overlay) */}
+      {/* Затемнення фону (Overlay) */}
       <div
         className={cn(
           "fixed inset-0 bg-bark/40 backdrop-blur-sm z-50 transition-opacity duration-300",
@@ -58,17 +58,17 @@ export default function CartModal({ isOpen, onClose }: Props) {
         onClick={onClose}
       />
 
-      {/* Выезжающая панель (Drawer) */}
+      {/* Виїзна панель (Drawer) */}
       <div
         className={cn(
           "fixed top-0 right-0 h-full w-full max-w-md bg-cream shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out transform",
           isOpen ? "translate-x-0" : "translate-x-full",
         )}
       >
-        {/* Шапка корзины */}
+        {/* Шапка кошика */}
         <div className="flex items-center justify-between p-5 border-b border-parchment bg-ivory">
           <h2 className="font-display font-bold text-xl text-bark">
-            Your Cart{" "}
+            Ваш кошик{" "}
             {items.length > 0 && (
               <span className="text-oak font-body text-sm font-normal ml-2">
                 ({items.length})
@@ -94,7 +94,7 @@ export default function CartModal({ isOpen, onClose }: Props) {
           </button>
         </div>
 
-        {/* Список товаров */}
+        {/* Список товарів */}
         <div
           className="flex-1 overflow-y-auto p-5 space-y-4"
           style={{ scrollbarWidth: "thin" }}
@@ -106,17 +106,17 @@ export default function CartModal({ isOpen, onClose }: Props) {
               </div>
               <div>
                 <p className="font-display font-bold text-bark text-lg">
-                  Your cart is empty
+                  Ваш кошик порожній
                 </p>
                 <p className="font-body text-oak text-sm mt-1">
-                  Looks like you haven`t added anything yet.
+                  Схоже, ви ще нічого не додали.
                 </p>
               </div>
               <button
                 onClick={onClose}
                 className="mt-4 px-6 py-2 bg-bark text-cream font-bold rounded-sm hover:bg-caramel transition-colors"
               >
-                Continue Shopping
+                Продовжити покупки
               </button>
             </div>
           ) : (
@@ -181,7 +181,7 @@ export default function CartModal({ isOpen, onClose }: Props) {
                       </button>
                     </div>
                     <span className="font-display font-bold text-amber">
-                      €{(item.price * item.quantity).toFixed(2)}
+                      {(item.price * item.quantity).toFixed(2)} грн
                     </span>
                   </div>
                 </div>
@@ -190,21 +190,21 @@ export default function CartModal({ isOpen, onClose }: Props) {
           )}
         </div>
 
-        {/* Подвал (Итого + кнопка оплаты) */}
+        {/* Підвал (Підсумок + кнопка оплати) */}
         {items.length > 0 && (
           <div className="p-5 border-t border-parchment bg-ivory">
             <div className="space-y-2 mb-4 font-body text-sm">
               <div className="flex justify-between text-oak">
-                <span>Subtotal</span>
-                <span>€{total.toFixed(2)}</span>
+                <span>Вартість товарів</span>
+                <span>{total.toFixed(2)} грн</span>
               </div>
               <div className="flex justify-between text-oak">
-                <span>Shipping</span>
-                <span className="text-sage font-bold">Free</span>
+                <span>Доставка</span>
+                <span className="text-sage font-bold">Безкоштовно</span>
               </div>
               <div className="flex justify-between text-bark font-display font-bold text-lg pt-2 border-t border-parchment">
-                <span>Total</span>
-                <span className="text-amber">€{total.toFixed(2)}</span>
+                <span>Загалом</span>
+                <span className="text-amber">{total.toFixed(2)} грн</span>
               </div>
             </div>
 
@@ -213,13 +213,13 @@ export default function CartModal({ isOpen, onClose }: Props) {
               disabled={items.length === 0}
               className="w-full py-3 bg-bark text-cream font-bold rounded-sm hover:bg-caramel transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Proceed to Checkout
+              Оформити замовлення
             </button>
             <button
               onClick={clearCart}
               className="w-full mt-3 font-body text-oak text-xs hover:text-bark transition-colors"
             >
-              Clear Cart
+              Очистити кошик
             </button>
           </div>
         )}

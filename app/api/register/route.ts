@@ -15,18 +15,21 @@ export async function POST(request: Request) {
 
     if (!termsAccepted) {
       return NextResponse.json(
-        { error: "Необходимо согласие с политикой пользования" },
+        { error: "Необхідна згода з політикою користування" },
         { status: 400 }
       );
     }
 
+    // Приводимо email до нижнього регістру та прибираємо зайві пробіли
+    const normalizedEmail = email.trim().toLowerCase();
+
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (existingUser) {
       return NextResponse.json(
-        { error: "Пользователь с таким email уже существует! Если вы использовали Google, попробуйте войти через него." },
+        { error: "Користувач із таким email вже існує! Якщо ви використовували Google, спробуйте увійти через нього." },
         { status: 400 }
       );
     }
@@ -35,9 +38,9 @@ export async function POST(request: Request) {
 
     const user = await prisma.user.create({
       data: {
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
-        termsAccepted: true, // Сохраняем подтверждение в базу
+        termsAccepted: true,
       },
     });
 
@@ -46,6 +49,7 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
+    console.error("Registration error:", error);
     return NextResponse.json(
       { error: "Server error while register" },
       { status: 500 }

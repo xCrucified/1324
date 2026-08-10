@@ -5,7 +5,7 @@ export interface CartItem {
   id: string;
   name: string;
   price: number;
-  originalPrice: number;
+  originalPrice?: number;
   img: string;
   shop: string;
   sold: number;
@@ -48,8 +48,11 @@ export const useShopStore = create<ShopStore>()(
         const existingIndex = currentItems.findIndex((item) => item.id === product.id);
 
         if (existingIndex > -1) {
-          const newItems = [...currentItems];
-          newItems[existingIndex].quantity += 1;
+          const newItems = currentItems.map((item, index) =>
+            index === existingIndex
+              ? { ...item, quantity: item.quantity + 1 }
+              : item
+          );
           set({ items: newItems });
         } else {
           set({ items: [...currentItems, { ...product, quantity: 1 }] });
@@ -60,7 +63,7 @@ export const useShopStore = create<ShopStore>()(
       },
       updateQuantity: (id, quantity) => {
         set({
-          items: get().items.map((item) => (item.id === id ? { ...item, quantity } : item)),
+          items: get().items.map((item) => (item.id === id ? { ...item, quantity: Math.max(1, quantity) } : item)),
         });
       },
       clearCart: () => set({ items: [] }),
