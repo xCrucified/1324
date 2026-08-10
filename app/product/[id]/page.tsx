@@ -5,7 +5,7 @@ import { auth } from '@/auth';
 import ProductGallery from '@/components/shared/product-gallery';
 import BuyButton from '@/components/shared/buy-button';
 import ReviewForm from '@/components/shared/review-form';
-import { getCategoryDetails } from '@/constants/categories';
+import { getCategoryDetails } from '@/store/categories';
 
 interface Props {
   params: Promise<{ id: string }>;

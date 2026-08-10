@@ -3,7 +3,7 @@ import Footer from "@/components/footer";
 import Header from "@/components/header";
 import Main from "@/components/main";
 import TopBar from "@/components/shared/top-bar";
-import { getCategoryAndSubIds, getCategoryDetails } from "@/constants/categories";
+import { getCategoryAndSubIds, getCategoryDetails } from "@/store/categories";
 
 interface PageProps {
   searchParams: Promise<{ category?: string }>;

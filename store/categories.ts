@@ -49,16 +49,13 @@ export function getCategoryDetails(catId?: string | null): { name: string; id: s
   return { name: catId, id: catId };
 }
 
-// НОВА ФУНКЦІЯ: Повертає масив ID ( саму категорію + всі її підкатегорії )
 export function getCategoryAndSubIds(catId?: string | null): string[] {
   if (!catId) return [];
   
   const parent = CATEGORY_TREE.find((p) => p.id === catId);
   if (parent) {
-    // Якщо це головна категорія, беремо її ID та ID всіх її підкатегорій
     return [parent.id, ...parent.subcategories.map((sub) => sub.id)];
   }
   
-  // Якщо це вже конкретна підкатегорія або інший ID
   return [catId];
 }

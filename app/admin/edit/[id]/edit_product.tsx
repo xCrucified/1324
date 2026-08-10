@@ -68,7 +68,6 @@ function getCategoryNameById(catId?: string | null): string | null {
 }
 
 export default function EditProductForm({ product, action }: EditProductFormProps) {
-  // Ініціалізація картинок
   const initialImages = product.images && product.images.length > 0 
     ? product.images 
     : (product.image ? [product.image] : [])
@@ -77,7 +76,6 @@ export default function EditProductForm({ product, action }: EditProductFormProp
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [filesList, setFilesList] = useState<File[]>([])
 
-  // Ініціалізація розмірів
   const initialSizes = product.sizes 
     ? (typeof product.sizes === 'string' ? product.sizes.split('\n').map((s: string) => s.trim()).filter(Boolean) : product.sizes)
     : []
@@ -90,8 +88,8 @@ export default function EditProductForm({ product, action }: EditProductFormProp
       const raw = typeof product.colorVariants === 'string' 
         ? JSON.parse(product.colorVariants) 
         : product.colorVariants
-      parsedColorVariants = Array.isArray(raw) ? raw.map((v: any) => ({
-        id: Math.random().toString(36).substring(7),
+      parsedColorVariants = Array.isArray(raw) ? raw.map((v: any, index: number) => ({
+        id: v.id || `color-variant-${index}`,
         name: v.name || '',
         preview: v.image || v.preview || ''
       })) : []

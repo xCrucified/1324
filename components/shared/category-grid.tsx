@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { CATEGORY_TREE } from '@/constants/categories';
+import { CATEGORY_TREE } from '@/store/categories';
 
 export default function CategoryGrid() {
   return (
