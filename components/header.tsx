@@ -12,6 +12,7 @@ import CartModal from "./shared/cart-modal";
 import SavedModal from "./shared/saved-modal";
 import OrdersModal from "./shared/orders-modal";
 import ProfileModal from "./shared/profile-modal";
+import { CATEGORY_TREE } from "@/constants/categories";
 
 interface Props {
   className?: string;
