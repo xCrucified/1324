@@ -11,7 +11,6 @@ export default function ProductForm({ action }: ProductFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [filesList, setFilesList] = useState<File[]>([])
 
-  // Функция обновления файлов в реальном инпуте через DataTransfer
   const updateInputFiles = (newFiles: File[]) => {
     const dataTransfer = new DataTransfer()
     newFiles.forEach((file) => dataTransfer.items.add(file))
@@ -22,7 +21,6 @@ export default function ProductForm({ action }: ProductFormProps) {
     setFilesList(newFiles)
   }
 
-  // Выбор файлов через проводник
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files
     if (!selectedFiles || selectedFiles.length === 0) return
@@ -35,7 +33,6 @@ export default function ProductForm({ action }: ProductFormProps) {
     setPreviews((prev) => [...prev, ...newPreviews])
   }
 
-  // Вставка файлов через Ctrl + V
   const handlePaste = (e: ClipboardEvent<HTMLDivElement>) => {
     const items = e.clipboardData?.items
     if (!items) return
@@ -61,7 +58,6 @@ export default function ProductForm({ action }: ProductFormProps) {
     }
   }
 
-  // Удаление отдельной картинки
   const handleRemoveImage = (index: number) => {
     const updatedFiles = filesList.filter((_, i) => i !== index)
     updateInputFiles(updatedFiles)
@@ -134,7 +130,6 @@ export default function ProductForm({ action }: ProductFormProps) {
         </div>
       </div>
 
-      {/* Зона загрузки с поддержкой Ctrl + V */}
       <div 
         tabIndex={0}
         onPaste={handlePaste}

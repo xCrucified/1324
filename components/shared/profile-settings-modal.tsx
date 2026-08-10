@@ -15,6 +15,7 @@ type ProfileFormState = {
   firstName: string;
   lastName: string;
   email: string;
+  phone: string;
   password: string;
   avatarPreview: string | null;
   avatarFile: File | null;
@@ -28,6 +29,7 @@ const initialFormState: ProfileFormState = {
   firstName: "",
   lastName: "",
   email: "",
+  phone: "",
   password: "",
   avatarPreview: null,
   avatarFile: null,
@@ -68,7 +70,7 @@ export const ProfileSettingsModal: React.FC<Props> = ({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [formState, dispatch] = useReducer(formReducer, initialFormState);
-  const { firstName, lastName, email, password, avatarPreview, avatarFile } = formState;
+  const { firstName, lastName, email, phone, password, avatarPreview, avatarFile } = formState;
 
   // Заполняем форму при открытии
   useEffect(() => {
@@ -81,6 +83,7 @@ export const ProfileSettingsModal: React.FC<Props> = ({
           lastName: last,
           email: session.user.email || "",
           password: "",
+          phone: "",
           // ТУТ ИЗМЕНЕНИЕ: используем нашу функцию для правильной ссылки
           avatarPreview: getSecureImageUrl(session.user.image),
           avatarFile: null,
@@ -131,6 +134,7 @@ export const ProfileSettingsModal: React.FC<Props> = ({
       formData.append("firstName", firstName);
       formData.append("lastName", lastName);
       formData.append("email", email);
+      formData.append("phone", phone);
       if (password) formData.append("password", password);
       if (avatarFile) formData.append("avatarFile", avatarFile);
 
@@ -164,8 +168,8 @@ export const ProfileSettingsModal: React.FC<Props> = ({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[99] transition-opacity" />
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
+      <div className="fixed inset-0 bg-black/50 z-99 transition-opacity" />
+      <div className="fixed inset-0 z-100 flex items-center justify-center p-4 overflow-y-auto">
         <div ref={modalRef} className={`w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-amber/20 overflow-hidden text-bark ${className}`}>
           
           <div className="flex justify-between items-center px-6 py-4 border-b border-amber/15 bg-parchment/30">
@@ -213,6 +217,10 @@ export const ProfileSettingsModal: React.FC<Props> = ({
                 <label className="text-xs font-bold text-oak ml-1">Email адреса</label>
                 <input required type="email" value={email} onChange={(e) => dispatch({ type: "updateField", field: "email", value: e.target.value })} disabled={isLoading} className="w-full bg-white border border-amber/30 rounded-xl px-4 py-2.5 text-sm text-bark outline-none focus:border-caramel focus:ring-1 focus:ring-caramel transition-all disabled:opacity-50" />
               </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-oak ml-1">Телефон</label>
+                <input type="tel" value={phone} onChange={(e) => dispatch({ type: "updateField", field: "phone", value: e.target.value })} disabled={isLoading} className="w-full bg-white border border-amber/30 rounded-xl px-4 py-2.5 text-sm text-bark outline-none focus:border-caramel focus:ring-1 focus:ring-caramel transition-all disabled:opacity-50" />
+              </div>
             </div>
 
             <hr className="border-amber/15" />
@@ -226,7 +234,7 @@ export const ProfileSettingsModal: React.FC<Props> = ({
               <button type="button" onClick={onClose} disabled={isLoading} className="px-5 py-2.5 text-oak hover:bg-parchment/50 font-semibold text-sm rounded-xl transition-colors disabled:opacity-50">
                 Скасувати
               </button>
-              <button type="submit" disabled={isLoading} className="min-w-[140px] flex justify-center px-6 py-2.5 bg-caramel hover:bg-amber text-white font-bold text-sm rounded-xl shadow-md transition-colors disabled:opacity-70 disabled:cursor-wait">
+              <button type="submit" disabled={isLoading} className="min-w-35 flex justify-center px-6 py-2.5 bg-caramel hover:bg-amber text-white font-bold text-sm rounded-xl shadow-md transition-colors disabled:opacity-70 disabled:cursor-wait">
                 {isLoading ? "Збереження..." : "Зберегти зміни"}
               </button>
             </div>

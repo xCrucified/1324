@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession, signOut } from 'next-auth/react';
+// import { useSession, signOut } from 'next-auth/react';
 import { getOrders } from '@/app/actions';
 import OrdersModal from './orders-modal';
 
@@ -13,7 +13,7 @@ interface Props {
 
 export const TopBar: React.FC<Props> = ({ className }) => {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  //  const { data: session, status } = useSession();
   const [ordersOpen, setOrdersOpen] = useState(false);
   const [ordersCount, setOrdersCount] = useState(0);
 
@@ -38,7 +38,7 @@ export const TopBar: React.FC<Props> = ({ className }) => {
     } else if (item === "Зареєструватися") {
       router.push("/register");
     } else if (item === "Вийти") {
-      signOut({ callbackUrl: "/" }); 
+      // signOut({ callbackUrl: "/" }); 
     } else if (item === "Допомога") {
       alert("Підтримка: support@pentu24.com");
     }
@@ -54,9 +54,10 @@ export const TopBar: React.FC<Props> = ({ className }) => {
               <strong className="text-wheat opacity-100">
                 Маркету Pentu24
               </strong>
+{/*               
               {session?.user?.name && (
                 <span className="ml-2 text-wheat">({session.user.name})</span>
-              )}
+              )} */}
             </span>
             <span className="hidden sm:inline opacity-40">|</span>
           </div>

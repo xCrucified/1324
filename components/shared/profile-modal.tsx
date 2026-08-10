@@ -84,7 +84,7 @@ export const ProfileModal: React.FC<Props> = ({
   return (
     <div
       ref={dropdownRef}
-      className={`absolute top-15 right-0 mt-2 w-70 bg-white rounded-2xl shadow-xl border border-amber/25 z-50 p-4 text-bark ${className}`}
+      className={`absolute top-15 mt-2 w-70 bg-white rounded-2xl shadow-xl border border-amber/25 z-50 p-4 text-bark ${className}`}
     >
       <div className="flex justify-between items-center pb-2 border-b border-amber/15">
         <h2 className="text-xs font-bold text-bark uppercase tracking-wider">
