@@ -74,6 +74,9 @@ model Product {
   orderItems  OrderItem[]
   favorites   Favorite[]
   reviews     Review[] // Зв'язок з відгуками
+  sourceUrl   String?  // Add this line (use String if it's required, String? if it's optional)
+  sizes         String[] // or Json? depending on your data structure
+  colorVariants Json?    // or String[] / Json? depending on your structure
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @default(now()) @updatedAt
 }

@@ -339,8 +339,9 @@ export async function updateProduct(id: string, formData: FormData) {
       images: allImages,
       categoryId,
       sourceUrl,
-      sizes,
-      colorVariants,
+      // Fix: Convert comma-separated strings into arrays before saving
+      sizes: sizes ? sizes.split(',').map((s) => s.trim()).filter(Boolean) : [],
+      colorVariants: colorVariants ? colorVariants.split(',').map((s) => s.trim()).filter(Boolean) : [],
     },
   })
 
