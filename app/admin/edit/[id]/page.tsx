@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { updateProduct } from '../../actions'
 import Link from 'next/link'
-import EditProductForm from './edit_product'
+import EditProductForm from './EditProductForm'
 
 interface EditPageProps {
   params: Promise<{ id: string }>

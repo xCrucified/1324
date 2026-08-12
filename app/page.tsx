@@ -3,7 +3,7 @@ import Footer from "@/components/footer";
 import Header from "@/components/header";
 import Main from "@/components/main";
 import TopBar from "@/components/shared/top-bar";
-import { getCategoryAndSubIds, getCategoryDetails } from "@/store/categories";
+import { getCategoryAndSubIds, getCategoryDetails } from "@/constants/categories";
 
 interface PageProps {
   searchParams: Promise<{ category?: string }>;
@@ -16,7 +16,7 @@ export default async function Page({ searchParams }: PageProps) {
 
   // 2. Формуємо умову для вибірки з БД з урахуванням спеціальних вкладок
   let whereClause: any = {};
-  const orderBy: any = { createdAt: "desc" };
+  let orderBy: any = { createdAt: "desc" };
 
   if (selectedCategory === "Flash Sale") {
     // Логіка для акційних товарів

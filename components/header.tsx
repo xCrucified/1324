@@ -4,29 +4,17 @@ import { cn } from "@/lib/utils";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { useShopStore } from "@/store/use-shop";
 import { getOrders } from "@/app/actions";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { CATEGORY_TREE } from "@/constants/categories";
 import CartModal from "./shared/cart-modal";
 import SavedModal from "./shared/saved-modal";
 import OrdersModal from "./shared/orders-modal";
 import ProfileModal from "./shared/profile-modal";
-import { CATEGORY_TREE } from "@/store/categories";
 
 interface Props {
   className?: string;
 }
-
-const CATEGORIES = [{ label: "Кераміка", icon: "🏺", count: "2.4k товарів" }];
-
-const getSecureImageUrl = (url: string | null | undefined) => {
-  if (!url) return null;
-  if (url.includes("vercel-storage.com")) {
-    return `/api/avatar?url=${encodeURIComponent(url)}`;
-  }
-  return url;
-};
 
 export const Header: React.FC<Props> = ({ className }) => {
   const [searchActive, setSearchActive] = useState(false);
@@ -38,7 +26,6 @@ export const Header: React.FC<Props> = ({ className }) => {
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: session } = useSession();
 
   const currentCategory = searchParams.get("category") || "Home";
 
@@ -229,38 +216,30 @@ export const Header: React.FC<Props> = ({ className }) => {
               onClick={() => setProfileOpen((prev) => !prev)}
               className="flex flex-col items-center gap-0.5 text-bark hover:text-caramel transition-colors relative"
             >
-              <div className="relative w-5 h-5 flex items-center justify-center">
-                {session?.user?.image ? (
-                  <Avatar className="w-5 h-5 border border-amber/30">
-                    <AvatarImage src={getSecureImageUrl(session.user.image) || ""} alt="Avatar" />
-                    <AvatarFallback className="text-[0.5rem] bg-parchment text-caramel">
-                      {session.user.name?.[0] || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                ) : (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M20 21a8 8 0 10-16 0"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <circle
-                      cx="12"
-                      cy="8"
-                      r="4"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                    />
-                  </svg>
-                )}
+              <div className="relative">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M20 21a8 8 0 10-16 0"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <circle
+                    cx="12"
+                    cy="8"
+                    r="4"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                  />
+                </svg>
               </div>
               <span className="font-body" style={{ fontSize: "0.6rem" }}>
                 Профіль
               </span>
             </button>
 
+            {/* Дропдаун випадає під кнопкою */}
             <ProfileModal
               isOpen={profileOpen}
               onClose={() => setProfileOpen(false)}

@@ -97,26 +97,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     })
   ],
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user }) {
       if (user) {
-        token.sub = user.id;
-        token.role = user.role;
-      }
-      // Перехоплюємо оновлення з клієнта
-      if (trigger === "update" && session) {
-        token.name = session.name ?? session.user?.name ?? token.name;
-        token.email = session.email ?? session.user?.email ?? token.email;
-        token.picture = session.image ?? session.user?.image ?? token.picture;
+        token.role = (user as any).role || "user";
+        token.id = user.id;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        if (token.sub) session.user.id = token.sub;
-        if (token.role) session.user.role = token.role as string;
-        if (token.name) session.user.name = token.name as string;
-        if (token.email) session.user.email = token.email as string;
-        if (token.picture) session.user.image = token.picture as string;
+        (session.user as any).role = token.role as string;
+        (session.user as any).id = token.id as string;
       }
       return session;
     },
