@@ -303,20 +303,20 @@ export async function updateProduct(id: string, formData: FormData) {
   const categoryId = (formData.get('categoryId') as string) || null
   const sourceUrl = (formData.get('sourceUrl') as string) || null
 
-  // --- ИСПРАВЛЕНИЕ: Преобразование sizes в массив (string[]) ---
+  // --- Парсинг размеров в массив string[] (без null) ---
   const rawSizes = formData.get('sizes') as string | null
-  let parsedSizes: string[] | undefined = undefined
+  let parsedSizes: string[] = []
   if (rawSizes && rawSizes.trim() !== '') {
     try {
-      parsedSizes = JSON.parse(rawSizes) // Если пришел JSON-массив
+      parsedSizes = JSON.parse(rawSizes)
     } catch {
-      parsedSizes = rawSizes.split(',').map((s) => s.trim()).filter(Boolean) // Если пришла строка через запятую
+      parsedSizes = rawSizes.split(',').map((s) => s.trim()).filter(Boolean)
     }
   }
 
-  // --- ИСПРАВЛЕНИЕ: Преобразование colorVariants в массив (string[]) ---
+  // --- Парсинг цветов в массив string[] (без null) ---
   const rawColorVariants = formData.get('colorVariants') as string | null
-  let parsedColorVariants: string[] | undefined = undefined
+  let parsedColorVariants: string[] = []
   if (rawColorVariants && rawColorVariants.trim() !== '') {
     try {
       parsedColorVariants = JSON.parse(rawColorVariants)
@@ -325,13 +325,12 @@ export async function updateProduct(id: string, formData: FormData) {
     }
   }
 
-  // Зчитування картинок з текстового поля (imagesText)
+  // Считывание картинок
   const rawImagesText = formData.get('imagesText') as string
   const textImages = rawImagesText
     ? rawImagesText.split('\n').map((url) => url.trim()).filter((url) => url.length > 0)
     : []
 
-  // Обробка файлів, якщо вони були завантажені через інпут
   const imageFiles = formData.getAll('imageFiles') as File[]
   const uploadedImageUrls: string[] = []
 
@@ -344,7 +343,6 @@ export async function updateProduct(id: string, formData: FormData) {
     }
   }
 
-  // Об'єднуємо завантажені файли та текстові посилання
   const allImages = [...uploadedImageUrls, ...textImages]
   const mainImage = allImages[0] || ''
 
@@ -358,9 +356,8 @@ export async function updateProduct(id: string, formData: FormData) {
       images: allImages,
       categoryId,
       sourceUrl,
-      // Передаем массивы как string[] для Prisma
-      sizes: parsedSizes && parsedSizes.length > 0 ? parsedSizes : undefined,
-      colorVariants: parsedColorVariants && parsedColorVariants.length > 0 ? parsedColorVariants : undefined,
+      sizes: parsedSizes,           // Передаем массив string[]
+      colorVariants: parsedColorVariants, // Передаем массив string[]
     },
   })
 
