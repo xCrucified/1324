@@ -358,8 +358,9 @@ export async function updateProduct(id: string, formData: FormData) {
       images: allImages,
       categoryId,
       sourceUrl,
-      sizes: parsedSizes,           // Передаем распарсенный массив
-      colorVariants: parsedColorVariants, // Передаем распарсенный массив
+      // Передаем массивы как string[] для Prisma
+      sizes: parsedSizes && parsedSizes.length > 0 ? parsedSizes : undefined,
+      colorVariants: parsedColorVariants && parsedColorVariants.length > 0 ? parsedColorVariants : undefined,
     },
   })
 
