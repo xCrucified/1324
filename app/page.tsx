@@ -16,7 +16,7 @@ export default async function Page({ searchParams }: PageProps) {
 
   // 2. Формуємо умову для вибірки з БД з урахуванням спеціальних вкладок
   let whereClause: any = {};
-  let orderBy: any = { createdAt: "desc" };
+  const orderBy: any = { createdAt: "desc" };
 
   if (selectedCategory === "Flash Sale") {
     // Логіка для акційних товарів

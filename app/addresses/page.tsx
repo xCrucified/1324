@@ -1,25 +1,25 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import RecipientForm, { RecipientData } from '@/components/shared/recipient-form';
 
 export default function AddressesPage() {
-  const [addresses, setAddresses] = useState<RecipientData[]>([]);
+  const [addresses, setAddresses] = useState<RecipientData[]>(() => {
+    if (typeof window === 'undefined') {
+      return [];
+    }
+
+    try {
+      const saved = localStorage.getItem('user_novaposhta_addresses');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+  });
   const [showForm, setShowForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState<RecipientData | null>(null);
-
-  // Завантаження збережених адрес із localStorage при монтуванні
-  useEffect(() => {
-    const saved = localStorage.getItem('user_novaposhta_addresses');
-    if (saved) {
-      try {
-        setAddresses(JSON.parse(saved));
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  }, []);
 
   // Збереження в localStorage при зміні
   const saveToLocalStorage = (updated: RecipientData[]) => {

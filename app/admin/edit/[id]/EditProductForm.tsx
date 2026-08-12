@@ -90,8 +90,8 @@ export default function EditProductForm({ product, action }: EditProductFormProp
       const raw = typeof product.colorVariants === 'string' 
         ? JSON.parse(product.colorVariants) 
         : product.colorVariants
-      parsedColorVariants = Array.isArray(raw) ? raw.map((v: any) => ({
-        id: Math.random().toString(36).substring(7),
+      parsedColorVariants = Array.isArray(raw) ? raw.map((v: any, index: number) => ({
+        id: `variant-${index}`,
         name: v.name || '',
         preview: v.image || v.preview || ''
       })) : []

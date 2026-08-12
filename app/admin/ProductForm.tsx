@@ -375,7 +375,7 @@ export default function ProductForm({ action }: ProductFormProps) {
         </div>
         
         <div>
-          <span className="block text-xs font-medium text-gray-600 mb-1">1. Вибрати файли з комп'ютера або вставити через Ctrl+V:</span>
+          <span className="block text-xs font-medium text-gray-600 mb-1">1. Вибрати файли з комп`ютера або вставити через Ctrl+V:</span>
           <input 
             ref={fileInputRef}
             type="file" 
