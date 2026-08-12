@@ -302,8 +302,28 @@ export async function updateProduct(id: string, formData: FormData) {
   const description = formData.get('description') as string
   const categoryId = (formData.get('categoryId') as string) || null
   const sourceUrl = (formData.get('sourceUrl') as string) || null
-  const sizes = (formData.get('sizes') as string) || null
-  const colorVariants = (formData.get('colorVariants') as string) || null
+
+  // --- ИСПРАВЛЕНИЕ: Преобразование sizes в массив (string[]) ---
+  const rawSizes = formData.get('sizes') as string | null
+  let parsedSizes: string[] | undefined = undefined
+  if (rawSizes && rawSizes.trim() !== '') {
+    try {
+      parsedSizes = JSON.parse(rawSizes) // Если пришел JSON-массив
+    } catch {
+      parsedSizes = rawSizes.split(',').map((s) => s.trim()).filter(Boolean) // Если пришла строка через запятую
+    }
+  }
+
+  // --- ИСПРАВЛЕНИЕ: Преобразование colorVariants в массив (string[]) ---
+  const rawColorVariants = formData.get('colorVariants') as string | null
+  let parsedColorVariants: string[] | undefined = undefined
+  if (rawColorVariants && rawColorVariants.trim() !== '') {
+    try {
+      parsedColorVariants = JSON.parse(rawColorVariants)
+    } catch {
+      parsedColorVariants = rawColorVariants.split(',').map((c) => c.trim()).filter(Boolean)
+    }
+  }
 
   // Зчитування картинок з текстового поля (imagesText)
   const rawImagesText = formData.get('imagesText') as string
@@ -311,13 +331,12 @@ export async function updateProduct(id: string, formData: FormData) {
     ? rawImagesText.split('\n').map((url) => url.trim()).filter((url) => url.length > 0)
     : []
 
-  // Обробка файлів, якщо вони були завантажені через інпут (опціонально, якщо ви зберігаєте базовану або завантажуєте файти)
+  // Обробка файлів, якщо вони були завантажені через інпут
   const imageFiles = formData.getAll('imageFiles') as File[]
   const uploadedImageUrls: string[] = []
 
   for (const file of imageFiles) {
     if (file && file.size > 0) {
-      // Конвертація файлу у base64 для збереження в базу або локально (або тут можна підключити сховище на кшталт S3/Vercel Blob)
       const bytes = await file.arrayBuffer()
       const buffer = Buffer.from(bytes)
       const base64Image = `data:${file.type};base64,${buffer.toString('base64')}`
@@ -325,7 +344,7 @@ export async function updateProduct(id: string, formData: FormData) {
     }
   }
 
-  // Об'єднуємо завантажені файли та текстові посилання (файли йдуть першими, як нові або головні)
+  // Об'єднуємо завантажені файли та текстові посилання
   const allImages = [...uploadedImageUrls, ...textImages]
   const mainImage = allImages[0] || ''
 
@@ -339,8 +358,8 @@ export async function updateProduct(id: string, formData: FormData) {
       images: allImages,
       categoryId,
       sourceUrl,
-      sizes,
-      colorVariants,
+      sizes: parsedSizes,           // Передаем распарсенный массив
+      colorVariants: parsedColorVariants, // Передаем распарсенный массив
     },
   })
 

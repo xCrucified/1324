@@ -43,24 +43,25 @@ export default async function ProductPage({ params }: Props) {
 
   // --- БЕЗПЕЧНИЙ ПАРСИНГ РОЗМІРІВ ---
   let parsedSizes: string[] = [];
-  if (product.sizes) {
+  if (product.sizes && typeof product.sizes === 'string') {
     try {
       const parsedJson = JSON.parse(product.sizes);
       if (Array.isArray(parsedJson)) {
         parsedSizes = parsedJson.map((s: any) => typeof s === 'object' ? (s.name || s.value || '') : String(s)).filter(Boolean);
       }
     } catch (e) {
-      if (product.sizes.includes(',')) {
-        parsedSizes = product.sizes.split(',').map(s => s.trim()).filter(Boolean);
+      const sizesStr = String(product.sizes);
+      if (sizesStr.includes(',')) {
+        parsedSizes = sizesStr.split(',').map(s => s.trim()).filter(Boolean);
       } else {
-        parsedSizes = product.sizes.split(/\s+/).map(s => s.trim()).filter(Boolean);
+        parsedSizes = sizesStr.split(/\s+/).map(s => s.trim()).filter(Boolean);
       }
     }
   }
 
   // --- БЕЗПЕЧНИЙ ПАРСИНГ КОЛЬОРІВ ---
   let parsedColors: any[] = [];
-  if (product.colorVariants) {
+  if (product.colorVariants && typeof product.colorVariants === 'string') {
     try {
       const parsedJson = JSON.parse(product.colorVariants);
       if (Array.isArray(parsedJson)) {
