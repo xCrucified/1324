@@ -14,6 +14,7 @@ export default function AddressesPage() {
     const saved = localStorage.getItem('user_novaposhta_addresses');
     if (saved) {
       try {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setAddresses(JSON.parse(saved));
       } catch (e) {
         console.error(e);
