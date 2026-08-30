@@ -70,10 +70,9 @@ model Product {
   image         String?
   images        String[]
   
-  // Додано поля, які використовуються у вашому коді оновлення (update)
   sourceUrl     String?
-  sizes         String?
-  colorVariants String?     @db.Text
+  sizes         String[]
+  colorVariants String[]
   
   categoryId    String?
   

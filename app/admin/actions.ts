@@ -1,11 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use server'
 
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
+// ЗАГЛУШКА: Проверка сессии админа (замени на реальную логику твоего провайдера авторизации)
 async function verifyAdmin() {
-  const isAdmin = true; // await checkUserRole() === 'ADMIN'
+  const isAdmin = true;
   if (!isAdmin) {
     throw new Error('У вас немає прав для виконання цієї операції')
   }
@@ -45,7 +47,6 @@ export async function createProduct(formData: FormData) {
     ? rawImagesText.split('\n').map((url) => url.trim()).filter((url) => url.length > 0)
     : []
 
-  // ВНИМАНИЕ: Для продакшена замени конвертацию в Base64 на загрузку в облако (S3/Cloudinary/Vercel Blob)
   const imageFiles = formData.getAll('imageFiles') as File[]
   const uploadedImageUrls: string[] = []
 
